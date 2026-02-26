@@ -3,18 +3,33 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import PromptCard from '@/components/PromptCard.astro';
 import { getModels, getPrompts } from '@/lib/db/queries';
 
+import postgres from 'postgres';
+
 let allModels: any[] = [];
 let pinned: any[] = [];
 let trending: any[] = [];
 let dbError: string | null = null;
 
 try {
+  // Raw connection test to get the actual PostgreSQL error
+  const dbUrl = import.meta.env.DATABASE_URL ?? process.env.DATABASE_URL;
+  const sql = postgres(dbUrl!, { prepare: false });
+  const testResult = await sql`SELECT count(*) as cnt FROM models`;
+  
+  // If raw query works, proceed with Drizzle
   allModels = await getModels();
   pinned = allModels.filter((m) => m.isPinned);
   const result = await getPrompts({ sort: 'popular', limit: 8 });
   trending = result.items;
 } catch (e: any) {
-  dbError = e?.message ?? String(e);
+  const parts = [
+    `Message: ${e?.message}`,
+    e?.code ? `Code: ${e.code}` : '',
+    e?.detail ? `Detail: ${e.detail}` : '',
+    e?.hint ? `Hint: ${e.hint}` : '',
+    `DB URL prefix: ${(import.meta.env.DATABASE_URL ?? process.env.DATABASE_URL ?? 'NOT SET').substring(0, 40)}...`,
+  ].filter(Boolean);
+  dbError = parts.join('\n');
   console.error('DB Error:', dbError);
 }
 ---
