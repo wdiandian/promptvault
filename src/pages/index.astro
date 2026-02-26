@@ -3,35 +3,9 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import PromptCard from '@/components/PromptCard.astro';
 import { getModels, getPrompts } from '@/lib/db/queries';
 
-import postgres from 'postgres';
-
-let allModels: any[] = [];
-let pinned: any[] = [];
-let trending: any[] = [];
-let dbError: string | null = null;
-
-try {
-  // Raw connection test to get the actual PostgreSQL error
-  const dbUrl = import.meta.env.DATABASE_URL ?? process.env.DATABASE_URL;
-  const sql = postgres(dbUrl!, { prepare: false });
-  const testResult = await sql`SELECT count(*) as cnt FROM models`;
-  
-  // If raw query works, proceed with Drizzle
-  allModels = await getModels();
-  pinned = allModels.filter((m) => m.isPinned);
-  const result = await getPrompts({ sort: 'popular', limit: 8 });
-  trending = result.items;
-} catch (e: any) {
-  const parts = [
-    `Message: ${e?.message}`,
-    e?.code ? `Code: ${e.code}` : '',
-    e?.detail ? `Detail: ${e.detail}` : '',
-    e?.hint ? `Hint: ${e.hint}` : '',
-    `DB URL prefix: ${(import.meta.env.DATABASE_URL ?? process.env.DATABASE_URL ?? 'NOT SET').substring(0, 40)}...`,
-  ].filter(Boolean);
-  dbError = parts.join('\n');
-  console.error('DB Error:', dbError);
-}
+const allModels = await getModels();
+const pinned = allModels.filter((m) => m.isPinned);
+const { items: trending } = await getPrompts({ sort: 'popular', limit: 8 });
 ---
 
 <BaseLayout
@@ -40,13 +14,6 @@ try {
   canonical="https://promptvault.com/"
 >
   <div class="max-w-[1100px] mx-auto px-6">
-    {dbError && (
-      <div class="bg-red-muted border border-red rounded-[10px] p-6 m-6 text-sm">
-        <p class="font-bold text-red mb-2">Database Error</p>
-        <pre class="text-text-3 text-xs whitespace-pre-wrap break-all">{dbError}</pre>
-        <p class="text-text-3 mt-3 text-xs">Check Vercel Environment Variables and Supabase RLS settings.</p>
-      </div>
-    )}
     <!-- Hero -->
     <section class="text-center pt-[100px] pb-[72px]">
       <h1 class="text-[3rem] font-bold tracking-[-0.04em] leading-[1.1] mb-3.5">
