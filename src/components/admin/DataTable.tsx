@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 
-type ColumnType = 'text' | 'badge' | 'link' | 'number';
+type ColumnType = 'text' | 'badge' | 'link' | 'number' | 'actions';
 
 interface Column {
   key: string;
@@ -105,6 +105,26 @@ export default function DataTable({
           >
             View
           </a>
+        );
+      }
+      case 'actions': {
+        const editHref = col.linkPrefix ? `${col.linkPrefix}${item[col.linkKey ?? 'id']}` : '#';
+        const viewHref = `/prompt/${item.slug ?? ''}`;
+        return (
+          <div className="flex gap-1.5">
+            <a
+              href={editHref}
+              className="text-[.75rem] px-2.5 py-1 rounded-sm border border-accent text-accent font-semibold hover:bg-accent hover:text-white transition-all"
+            >
+              Edit
+            </a>
+            <a
+              href={viewHref}
+              className="text-[.75rem] px-2.5 py-1 rounded-sm border border-border text-text-3 font-semibold hover:border-border-hover hover:text-text-2 transition-all"
+            >
+              View
+            </a>
+          </div>
         );
       }
       case 'number':

@@ -1,0 +1,68 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import PromptForm from '@/components/admin/PromptForm.tsx';
+import UploadZone from '@/components/admin/UploadZone.tsx';
+import { db } from '@/lib/db/index';
+import { promptItems, models, tags, promptItemTags } from '@/lib/db/schema';
+import { eq, asc } from 'drizzle-orm';
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/admin/content');
+
+const [item] = await db.select().from(promptItems).where(eq(promptItems.id, id)).limit(1);
+if (!item) return Astro.redirect('/admin/content');
+
+const allModels = await db.select({ id: models.id, name: models.name, version: models.version }).from(models).orderBy(asc(models.sort));
+const allTags = await db.select({ id: tags.id, name: tags.name }).from(tags).orderBy(asc(tags.sort));
+
+const itemTags = await db
+  .select({ name: tags.name })
+  .from(promptItemTags)
+  .innerJoin(tags, eq(promptItemTags.tagId, tags.id))
+  .where(eq(promptItemTags.promptItemId, id));
+
+const initial = {
+  id: item.id,
+  title: item.title,
+  slug: item.slug,
+  modelId: item.modelId,
+  promptText: item.promptText,
+  negativePrompt: item.negativePrompt ?? '',
+  params: item.params ? JSON.stringify(item.params, null, 2) : '{}',
+  notes: item.notes ?? '',
+  tags: itemTags.map((t) => t.name).join(', '),
+  status: item.status,
+};
+---
+
+<AdminLayout title={`Edit: ${item.title}`}>
+  <div class="max-w-[700px]">
+    <div class="flex items-center gap-3 mb-5">
+      <a href="/admin/content" class="text-text-3 hover:text-text-2 transition-colors text-sm">
+        ← Back to Content
+      </a>
+    </div>
+
+    <h2 class="text-[1.125rem] font-bold tracking-[-0.02em] mb-4">Edit Prompt</h2>
+
+    <div class="bg-bg-card border border-border rounded-[10px] p-5 mb-4">
+      <PromptForm
+        client:load
+        models={allModels.map((m) => ({ id: m.id, name: m.version ? `${m.name} (${m.version})` : m.name }))}
+        tags={allTags}
+        initial={initial}
+      />
+    </div>
+
+    <div class="bg-bg-card border border-border rounded-[10px] p-5">
+      <label class="block text-xs text-text-3 mb-2 font-medium">Upload Additional Assets</label>
+      <UploadZone client:load promptItemId={id} />
+    </div>
+
+    <div class="mt-4 flex gap-3">
+      <a href={`/prompt/${item.slug}`} class="text-sm text-accent hover:text-accent-hover transition-colors">
+        View Live →
+      </a>
+    </div>
+  </div>
+</AdminLayout>

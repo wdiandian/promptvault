@@ -7,7 +7,11 @@ import { db } from '@/lib/db/index';
 import { promptItems, models, tags } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 
-const allModels = await db.select({ id: models.id, name: models.name }).from(models).orderBy(models.sort);
+const rawModels = await db.select({ id: models.id, name: models.name, version: models.version }).from(models).orderBy(models.sort);
+const allModels = rawModels.map((m) => ({
+  id: m.id,
+  name: m.version ? `${m.name} (${m.version})` : m.name,
+}));
 const allTags = await db.select({ id: tags.id, name: tags.name }).from(tags).orderBy(tags.sort);
 
 const items = await db
@@ -59,7 +63,7 @@ const tableItems = items.map((item) => ({
       { key: 'status', label: 'Status', sortable: true, type: 'badge' },
       { key: 'copies', label: 'Copies', sortable: true, type: 'number' },
       { key: 'dateStr', label: 'Date', sortable: true, className: 'text-text-3' },
-      { key: 'slug', label: 'Actions', type: 'link', linkPrefix: '/prompt/' },
+      { key: 'id', label: 'Actions', type: 'actions', linkPrefix: '/admin/edit/' },
     ]}
   />
 </AdminLayout>
