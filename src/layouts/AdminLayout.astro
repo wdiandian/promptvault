@@ -1,0 +1,61 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+
+const navItems = [
+  { label: 'Dashboard', href: '/admin', icon: 'grid' },
+  { label: 'Content', href: '/admin/content', icon: 'file' },
+  { label: 'Models', href: '/admin/models', icon: 'star' },
+  { label: 'Tags', href: '/admin/tags', icon: 'tag' },
+];
+
+const currentPath = Astro.url.pathname;
+---
+
+<BaseLayout title={`${title} — Admin | PromptVault`} noindex>
+  <div class="flex min-h-[calc(100vh-52px)]">
+    <aside class="w-[200px] fixed top-[52px] bottom-0 left-0 bg-bg-sidebar border-r border-border overflow-y-auto py-4 max-md:hidden">
+      {navItems.map((item) => (
+        <a
+          href={item.href}
+          class:list={[
+            'flex items-center gap-2.5 px-4 py-2.5 text-[.8125rem] transition-all duration-100',
+            currentPath === item.href
+              ? 'text-text font-semibold'
+              : 'text-text-3 hover:text-text-2 hover:bg-bg-hover',
+          ]}
+        >
+          <span class="w-4 h-4">
+            {item.icon === 'grid' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>}
+            {item.icon === 'file' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
+            {item.icon === 'star' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
+            {item.icon === 'tag' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>}
+          </span>
+          {item.label}
+        </a>
+      ))}
+    </aside>
+    <div class="ml-[200px] flex-1 p-6 md:p-7 max-md:ml-0">
+      <div class="flex justify-end mb-4">
+        <button
+          id="logout-btn"
+          class="text-xs text-text-3 border border-border px-3 py-1.5 rounded-sm hover:border-border-hover hover:text-text-2 transition-all"
+        >
+          Logout
+        </button>
+      </div>
+      <slot />
+    </div>
+  </div>
+  <script>
+    document.getElementById('logout-btn')?.addEventListener('click', () => {
+      document.cookie = 'admin_session=; path=/; max-age=0';
+      window.location.href = '/admin/login';
+    });
+  </script>
+</BaseLayout>

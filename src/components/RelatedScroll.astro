@@ -1,0 +1,52 @@
+---
+interface RelatedItem {
+  id: string;
+  title: string;
+  slug: string;
+  coverUrl: string | null;
+  coverThumbUrl?: string | null;
+  coverHeight?: number | null;
+  copies: number;
+  modelName: string;
+}
+
+interface Props {
+  title: string;
+  items: RelatedItem[];
+}
+
+const { title, items } = Astro.props;
+
+function formatCount(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+---
+
+{items.length > 0 && (
+  <section class="px-5 py-7 border-t border-border">
+    <h2 class="text-base font-bold mb-3.5 tracking-[-0.02em]">{title}</h2>
+    <div class="flex gap-2 overflow-x-auto pb-1" style="scrollbar-width: thin;">
+      {items.map((item) => (
+        <a
+          href={`/prompt/${item.slug}`}
+          class="group min-w-[200px] max-w-[200px] shrink-0 rounded-sm overflow-hidden relative bg-bg-card"
+        >
+          <img
+            src={item.coverUrl ?? `https://picsum.photos/seed/${item.slug}/300/${item.coverHeight ?? 300}`}
+            alt={item.title}
+            loading="lazy"
+            class="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+          />
+          <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3">
+            <h3 class="text-[.75rem] font-semibold leading-[1.35] mb-0.5 line-clamp-2">{item.title}</h3>
+            <div class="text-[.65rem] text-white/60 flex items-center gap-2">
+              <span>{item.modelName}</span>
+              <span>♡ {formatCount(item.copies)}</span>
+            </div>
+          </div>
+        </a>
+      ))}
+    </div>
+  </section>
+)}

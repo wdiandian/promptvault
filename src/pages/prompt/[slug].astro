@@ -1,0 +1,189 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import CopyButton from '@/components/CopyButton.tsx';
+import ThumbStrip from '@/components/ThumbStrip.tsx';
+import RelatedScroll from '@/components/RelatedScroll.astro';
+import { getPromptBySlug, getRelatedPrompts, incrementViews } from '@/lib/db/queries';
+import { truncate } from '@/lib/utils';
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/gallery');
+
+const prompt = await getPromptBySlug(slug);
+if (!prompt) return Astro.redirect('/gallery');
+
+await incrementViews(slug);
+
+const related = await getRelatedPrompts(prompt.modelId, prompt.id, 5);
+
+const params = (prompt.params as Record<string, string> | null) ?? {};
+const paramEntries = Object.entries(params);
+
+const fullText = [
+  prompt.promptText,
+  prompt.negativePrompt ? `\nNegative: ${prompt.negativePrompt}` : '',
+  paramEntries.length > 0 ? `\nParams: ${paramEntries.map(([k, v]) => `${k}=${v}`).join(', ')}` : '',
+].join('');
+
+const jsonText = JSON.stringify({
+  model: prompt.model.name,
+  prompt: prompt.promptText,
+  negative: prompt.negativePrompt,
+  params,
+}, null, 2);
+
+const seoDesc = truncate(prompt.promptText, 150);
+---
+
+<BaseLayout
+  title={`${prompt.title} — ${prompt.model.name} Prompt | PromptVault`}
+  description={seoDesc}
+  ogImage={prompt.coverUrl ?? undefined}
+>
+  <Fragment slot="head">
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'CreativeWork',
+      name: prompt.title,
+      description: seoDesc,
+      image: prompt.coverUrl,
+      author: { '@type': 'Organization', name: 'PromptVault' },
+      datePublished: prompt.createdAt.toISOString().slice(0, 10),
+      keywords: prompt.tags.map((t) => t.name),
+    })} />
+    <script is:inline type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://promptvault.com/' },
+        { '@type': 'ListItem', position: 2, name: prompt.model.name, item: `https://promptvault.com/gallery?model=${prompt.modelId}` },
+        { '@type': 'ListItem', position: 3, name: prompt.title },
+      ],
+    })} />
+  </Fragment>
+
+  <div class="flex min-h-[calc(100vh-52px)] max-md:flex-col">
+    <!-- Media -->
+    <div class="flex-[1.2] bg-bg-media flex flex-col items-center justify-center p-10 relative min-h-[520px] max-md:min-h-[300px] max-md:p-6">
+      <a href="/gallery" class="absolute top-4 left-4 flex items-center gap-[5px] text-text-3 text-[.8125rem] font-medium px-3 py-[7px] rounded-sm transition-all duration-150 hover:text-text-2 hover:bg-white/5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </a>
+
+      {prompt.assets.length > 0 ? (
+        <ThumbStrip client:load assets={prompt.assets} />
+      ) : (
+        <img
+          src={prompt.coverUrl ?? `https://picsum.photos/seed/${slug}/800/1000`}
+          alt={prompt.title}
+          class="max-h-[72vh] max-w-full rounded-[10px] object-contain"
+        />
+      )}
+    </div>
+
+    <!-- Info -->
+    <div class="w-[440px] border-l border-border overflow-y-auto p-8 flex flex-col gap-5 max-md:w-full max-md:border-l-0 max-md:border-t max-md:border-border">
+      <nav class="flex items-center gap-1.5 text-[.7rem] text-text-3">
+        <a href="/" class="hover:text-text-2 transition-colors">Home</a>
+        <span>/</span>
+        <a href={`/gallery?model=${prompt.modelId}`} class="hover:text-text-2 transition-colors">{prompt.model.name}</a>
+        <span>/</span>
+        <span class="text-text-2 truncate max-w-[200px]">{prompt.title}</span>
+      </nav>
+      <div>
+        <h1 class="text-[1.5rem] font-bold leading-[1.25] tracking-[-0.03em]">{prompt.title}</h1>
+        <div class="flex items-center gap-2 text-[.8125rem] text-text-3 mt-1.5">
+          <span class="w-2 h-2 rounded-full shrink-0" style={`background:${prompt.model.color}`}></span>
+          {prompt.model.name} · {prompt.model.version ?? ''} · {prompt.model.type === 'video' ? 'Video' : 'Image'}
+        </div>
+      </div>
+
+      <div class="flex gap-4 text-[.8125rem] text-text-3 flex-wrap">
+        <span>{prompt.views.toLocaleString()} views</span>
+        <span>·</span>
+        <span>{prompt.copies.toLocaleString()} copies</span>
+        <span>·</span>
+        <time datetime={prompt.createdAt.toISOString().slice(0, 10)}>
+          {prompt.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+        </time>
+      </div>
+
+      {prompt.tags.length > 0 && (
+        <div class="flex gap-[5px] flex-wrap">
+          {prompt.tags.map((tag) => (
+            <a
+              href={`/gallery?tags=${tag.id}`}
+              class="text-[.7rem] px-2.5 py-1 bg-bg-hover border border-border text-text-3 rounded-full transition-all duration-150 hover:text-text-2 hover:border-border-hover"
+            >
+              {tag.name}
+            </a>
+          ))}
+        </div>
+      )}
+
+      <!-- Prompt -->
+      <div class="bg-bg-card border border-border rounded-[10px] overflow-hidden">
+        <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
+          <h4 class="text-[.8125rem] font-semibold text-text-2">Prompt</h4>
+          <CopyButton client:load text={prompt.promptText} slug={slug} />
+        </div>
+        <div class="px-3.5 py-3 font-mono text-[.8125rem] leading-[1.7] text-text-3 whitespace-pre-wrap break-words max-h-[220px] overflow-y-auto">
+          {prompt.promptText}
+        </div>
+      </div>
+
+      <!-- Negative -->
+      {prompt.negativePrompt && (
+        <div class="bg-bg-card border border-border rounded-[10px] overflow-hidden">
+          <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
+            <h4 class="text-[.8125rem] font-semibold text-text-2">Negative Prompt</h4>
+            <CopyButton client:load text={prompt.negativePrompt} slug={slug} />
+          </div>
+          <div class="px-3.5 py-3 font-mono text-[.8125rem] leading-[1.7] text-text-3 whitespace-pre-wrap break-words max-h-[220px] overflow-y-auto">
+            {prompt.negativePrompt}
+          </div>
+        </div>
+      )}
+
+      <!-- Parameters -->
+      {paramEntries.length > 0 && (
+        <div class="bg-bg-card border border-border rounded-[10px] overflow-hidden">
+          <div class="px-3.5 py-2.5 border-b border-border">
+            <h4 class="text-[.8125rem] font-semibold text-text-2">Parameters</h4>
+          </div>
+          <table class="w-full text-[.8125rem]">
+            <tbody>
+              {paramEntries.map(([key, val]) => (
+                <tr>
+                  <td class="px-3.5 py-2 border-b border-border text-text-3 font-medium font-mono w-[110px]">{key}</td>
+                  <td class="px-3.5 py-2 border-b border-border text-text-2 font-mono">{val}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <!-- Notes -->
+      {prompt.notes && (
+        <div class="bg-bg-card border border-border rounded-[10px] overflow-hidden">
+          <div class="px-3.5 py-2.5 border-b border-border">
+            <h4 class="text-[.8125rem] font-semibold text-text-2">Notes</h4>
+          </div>
+          <div class="px-3.5 py-3 font-mono text-[.8125rem] leading-[1.7] text-text-3 whitespace-pre-wrap break-words">
+            {prompt.notes}
+          </div>
+        </div>
+      )}
+
+      <!-- Actions -->
+      <div class="flex gap-1.5 flex-wrap">
+        <CopyButton client:load text={fullText} label="Copy All" variant="fill" slug={slug} />
+        <CopyButton client:load text={jsonText} label="Copy JSON" variant="outline" slug={slug} />
+        <CopyButton client:load text={`https://promptvault.com/prompt/${slug}`} label="Share" variant="outline" />
+      </div>
+    </div>
+  </div>
+
+  <RelatedScroll title={`More from ${prompt.model.name}`} items={related} />
+</BaseLayout>

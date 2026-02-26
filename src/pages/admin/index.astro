@@ -1,0 +1,45 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import { getStats } from '@/lib/db/queries';
+
+const stats = await getStats();
+
+function fmt(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'k';
+  return String(n);
+}
+---
+
+<AdminLayout title="Dashboard">
+  <div class="flex gap-3 mb-6 flex-wrap">
+    <div class="flex-1 min-w-[140px] bg-bg-card border border-border rounded-[10px] p-5">
+      <div class="text-[1.5rem] font-bold tracking-[-0.02em] text-accent mb-0.5">{fmt(stats.prompts)}</div>
+      <div class="text-[.7rem] text-text-3 uppercase tracking-[.04em] font-medium">Prompts</div>
+    </div>
+    <div class="flex-1 min-w-[140px] bg-bg-card border border-border rounded-[10px] p-5">
+      <div class="text-[1.5rem] font-bold tracking-[-0.02em] text-orange mb-0.5">{stats.pending}</div>
+      <div class="text-[.7rem] text-text-3 uppercase tracking-[.04em] font-medium">Pending</div>
+    </div>
+    <div class="flex-1 min-w-[140px] bg-bg-card border border-border rounded-[10px] p-5">
+      <div class="text-[1.5rem] font-bold tracking-[-0.02em] text-green mb-0.5">{fmt(stats.media)}</div>
+      <div class="text-[.7rem] text-text-3 uppercase tracking-[.04em] font-medium">Media</div>
+    </div>
+    <div class="flex-1 min-w-[140px] bg-bg-card border border-border rounded-[10px] p-5">
+      <div class="text-[1.5rem] font-bold tracking-[-0.02em] text-text-3 mb-0.5">{fmt(stats.copies)}</div>
+      <div class="text-[.7rem] text-text-3 uppercase tracking-[.04em] font-medium">Copies</div>
+    </div>
+  </div>
+
+  <h2 class="text-[1.125rem] font-bold tracking-[-0.02em] mb-4">Quick Actions</h2>
+  <div class="flex gap-3 flex-wrap">
+    <a href="/admin/content" class="px-5 py-2.5 bg-accent text-white rounded-sm text-[.8125rem] font-semibold transition-colors hover:bg-accent-hover">
+      Manage Content
+    </a>
+    <a href="/admin/models" class="px-5 py-2.5 border border-border text-text-3 rounded-sm text-[.8125rem] font-semibold transition-all hover:border-border-hover hover:text-text-2">
+      Manage Models
+    </a>
+    <a href="/admin/tags" class="px-5 py-2.5 border border-border text-text-3 rounded-sm text-[.8125rem] font-semibold transition-all hover:border-border-hover hover:text-text-2">
+      Manage Tags
+    </a>
+  </div>
+</AdminLayout>

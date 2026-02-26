@@ -1,0 +1,97 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PromptCard from '@/components/PromptCard.astro';
+import { getModels, getPrompts } from '@/lib/db/queries';
+
+const allModels = await getModels();
+const pinned = allModels.filter((m) => m.isPinned);
+const { items: trending } = await getPrompts({ sort: 'popular', limit: 8 });
+---
+
+<BaseLayout
+  title="PromptVault — AI Prompt Gallery | Curated Prompts for Midjourney, FLUX, Stable Diffusion & More"
+  description="Studio-grade AI prompts with full parameters for pixel-perfect reproduction. Browse curated prompts for Midjourney, FLUX, Stable Diffusion, DALL-E, Sora and more. One-click copy, no sign-up required."
+  canonical="https://promptvault.com/"
+>
+  <div class="max-w-[1100px] mx-auto px-6">
+    <!-- Hero -->
+    <section class="text-center pt-[100px] pb-[72px]">
+      <h1 class="text-[3rem] font-bold tracking-[-0.04em] leading-[1.1] mb-3.5">
+        Copy. Paste. <em class="not-italic text-accent">Create.</em>
+      </h1>
+      <p class="text-base text-text-3 max-w-[440px] mx-auto mb-8 leading-relaxed">
+        Studio-grade AI prompts with full parameters for pixel-perfect reproduction. No prompt engineering required.
+      </p>
+      <div class="flex gap-2.5 justify-center flex-wrap mb-5">
+        <form role="search" action="/search" class="flex items-center bg-bg-input border border-border rounded-[10px] px-3.5 gap-2 w-[400px] max-w-full transition-[border] duration-150 focus-within:border-text-3">
+          <svg class="w-4 h-4 text-text-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <label for="hero-search" class="sr-only">Search</label>
+          <input id="hero-search" name="q" type="text" placeholder="Search prompts, models…" class="border-none bg-transparent py-2.5 w-full text-sm outline-none text-text placeholder:text-text-3" />
+        </form>
+      </div>
+      <a href="/gallery" class="inline-block bg-accent text-white px-7 py-[11px] rounded-[10px] text-sm font-semibold tracking-[-0.01em] transition-all duration-150 hover:bg-accent-hover">
+        Enter Gallery
+      </a>
+    </section>
+
+    <!-- Featured Models -->
+    <section class="pb-16">
+      <div class="text-[.8125rem] font-semibold text-text-3 uppercase tracking-[.06em] mb-5 text-center">
+        Featured Models
+      </div>
+      <div class="flex gap-3 justify-center flex-wrap">
+        {pinned.map((m) => (
+          <a
+            href={`/gallery?model=${m.id}`}
+            class="flex items-center gap-2.5 px-5 py-3 rounded-[10px] border border-border bg-bg-card transition-all duration-200 hover:border-border-hover hover:-translate-y-0.5"
+          >
+            <span class="w-2.5 h-2.5 rounded-full shrink-0" style={`background:${m.color}`}></span>
+            <span class="text-[.8125rem] font-semibold text-text-2">{m.name}</span>
+          </a>
+        ))}
+      </div>
+    </section>
+
+    <!-- Trending -->
+    {trending.length > 0 && (
+      <section class="pb-16">
+        <div class="text-[.8125rem] font-semibold text-text-3 uppercase tracking-[.06em] mb-5 text-center">
+          Trending
+        </div>
+        <div class="columns-2 sm:columns-3 lg:columns-4 gap-1.5">
+          {trending.map((p) => (
+            <PromptCard
+              title={p.title}
+              slug={p.slug}
+              coverUrl={p.coverUrl}
+              coverHeight={p.coverHeight}
+              modelName={p.modelName}
+              copies={p.copies}
+              type={p.modelType}
+            />
+          ))}
+        </div>
+      </section>
+    )}
+
+    <!-- Value Props -->
+    <section class="pb-16">
+      <div class="flex gap-4 flex-wrap justify-center">
+        <div class="flex-1 min-w-[260px] max-w-[340px] p-7 rounded-[10px] border border-border bg-bg-card">
+          <h3 class="text-[.9375rem] font-semibold mb-1.5 tracking-[-0.01em]">Pixel-Perfect Reproduction</h3>
+          <p class="text-[.8125rem] text-text-3 leading-relaxed">Every prompt includes complete parameters so you can reproduce the exact same result, every time.</p>
+        </div>
+        <div class="flex-1 min-w-[260px] max-w-[340px] p-7 rounded-[10px] border border-border bg-bg-card">
+          <h3 class="text-[.9375rem] font-semibold mb-1.5 tracking-[-0.01em]">Multi-Model Coverage</h3>
+          <p class="text-[.8125rem] text-text-3 leading-relaxed">Midjourney, FLUX, Stable Diffusion, DALL-E, Sora, Runway — image and video models in one gallery.</p>
+        </div>
+        <div class="flex-1 min-w-[260px] max-w-[340px] p-7 rounded-[10px] border border-border bg-bg-card">
+          <h3 class="text-[.9375rem] font-semibold mb-1.5 tracking-[-0.01em]">One-Click Copy</h3>
+          <p class="text-[.8125rem] text-text-3 leading-relaxed">Copy prompt, parameters, or structured JSON. No sign-up. Just copy, paste, and create.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</BaseLayout>

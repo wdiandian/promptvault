@@ -1,0 +1,121 @@
+---
+interface ModelItem {
+  id: string;
+  name: string;
+  type?: string;
+  count?: number;
+}
+
+interface Props {
+  models: ModelItem[];
+  pinnedIds?: string[];
+  currentModelId?: string;
+}
+
+const { models, pinnedIds = [], currentModelId } = Astro.props;
+
+const pinned = models.filter((m) => pinnedIds.includes(m.id));
+const imageModels = models.filter((m) => !pinnedIds.includes(m.id) && m.type !== 'video');
+const videoModels = models.filter((m) => !pinnedIds.includes(m.id) && m.type === 'video');
+
+const totalCount = models.reduce((sum, m) => sum + (m.count ?? 0), 0);
+---
+
+<aside class="w-[220px] fixed top-[52px] bottom-0 left-0 bg-bg-sidebar border-r border-border overflow-y-auto py-4 z-50 max-md:hidden">
+  <a
+    href="/gallery"
+    class:list={[
+      'relative flex items-center gap-2 px-4 py-2 text-[.8125rem] transition-all duration-100',
+      !currentModelId
+        ? 'text-text font-semibold'
+        : 'text-text-3 hover:text-text-2 hover:bg-bg-hover',
+    ]}
+  >
+    {!currentModelId && (
+      <span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-accent rounded-sm" />
+    )}
+    <span>All</span>
+    <span class="ml-auto text-[.7rem] text-text-3">{totalCount}</span>
+  </a>
+
+  {pinned.length > 0 && (
+    <>
+      <div class="px-4 text-[.6875rem] font-semibold uppercase tracking-[.05em] text-text-3 mt-5 mb-1.5">
+        Featured
+      </div>
+      {pinned.map((m) => (
+        <a
+          href={`/gallery?model=${m.id}`}
+          class:list={[
+            'relative flex items-center gap-2 px-4 py-2 text-[.8125rem] transition-all duration-100',
+            currentModelId === m.id
+              ? 'text-text font-semibold'
+              : 'text-text-3 hover:text-text-2 hover:bg-bg-hover',
+          ]}
+        >
+          {currentModelId === m.id && (
+            <span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-accent rounded-sm" />
+          )}
+          <span>{m.name}</span>
+          {m.count != null && (
+            <span class="ml-auto text-[.7rem] text-text-3">{m.count}</span>
+          )}
+        </a>
+      ))}
+    </>
+  )}
+
+  {imageModels.length > 0 && (
+    <>
+      <div class="px-4 text-[.6875rem] font-semibold uppercase tracking-[.05em] text-text-3 mt-5 mb-1.5">
+        Image
+      </div>
+      {imageModels.map((m) => (
+        <a
+          href={`/gallery?model=${m.id}`}
+          class:list={[
+            'relative flex items-center gap-2 px-4 py-2 text-[.8125rem] transition-all duration-100',
+            currentModelId === m.id
+              ? 'text-text font-semibold'
+              : 'text-text-3 hover:text-text-2 hover:bg-bg-hover',
+          ]}
+        >
+          {currentModelId === m.id && (
+            <span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-accent rounded-sm" />
+          )}
+          <span>{m.name}</span>
+          {m.count != null && (
+            <span class="ml-auto text-[.7rem] text-text-3">{m.count}</span>
+          )}
+        </a>
+      ))}
+    </>
+  )}
+
+  {videoModels.length > 0 && (
+    <>
+      <div class="px-4 text-[.6875rem] font-semibold uppercase tracking-[.05em] text-text-3 mt-5 mb-1.5">
+        Video
+      </div>
+      {videoModels.map((m) => (
+        <a
+          href={`/gallery?model=${m.id}`}
+          class:list={[
+            'relative flex items-center gap-2 px-4 py-2 text-[.8125rem] transition-all duration-100',
+            currentModelId === m.id
+              ? 'text-text font-semibold'
+              : 'text-text-3 hover:text-text-2 hover:bg-bg-hover',
+          ]}
+        >
+          {currentModelId === m.id && (
+            <span class="absolute left-0 top-1.5 bottom-1.5 w-0.5 bg-accent rounded-sm" />
+          )}
+          <span>{m.name}</span>
+          {m.count != null && (
+            <span class="ml-auto text-[.7rem] text-text-3">{m.count}</span>
+          )}
+        </a>
+      ))}
+    </>
+  )}
+</aside>

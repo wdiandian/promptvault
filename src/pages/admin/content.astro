@@ -1,0 +1,65 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import PromptForm from '@/components/admin/PromptForm.tsx';
+import UploadZone from '@/components/admin/UploadZone.tsx';
+import DataTable from '@/components/admin/DataTable.tsx';
+import { db } from '@/lib/db/index';
+import { promptItems, models, tags } from '@/lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+const allModels = await db.select({ id: models.id, name: models.name }).from(models).orderBy(models.sort);
+const allTags = await db.select({ id: tags.id, name: tags.name }).from(tags).orderBy(tags.sort);
+
+const items = await db
+  .select({
+    id: promptItems.id,
+    title: promptItems.title,
+    slug: promptItems.slug,
+    status: promptItems.status,
+    views: promptItems.views,
+    copies: promptItems.copies,
+    createdAt: promptItems.createdAt,
+    modelName: models.name,
+  })
+  .from(promptItems)
+  .innerJoin(models, eq(promptItems.modelId, models.id))
+  .orderBy(desc(promptItems.createdAt));
+
+const tableItems = items.map((item) => ({
+  ...item,
+  dateStr: item.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+  dateISO: item.createdAt.toISOString().slice(0, 10),
+}));
+---
+
+<AdminLayout title="Content">
+  <h2 class="text-[1.125rem] font-bold tracking-[-0.02em] mb-4">Content Management</h2>
+
+  <details class="mb-6 bg-bg-card border border-border rounded-[10px] overflow-hidden">
+    <summary class="px-5 py-3 cursor-pointer text-[.8125rem] font-semibold text-accent hover:bg-bg-hover transition-colors">
+      + New Prompt
+    </summary>
+    <div class="px-5 py-4 border-t border-border">
+      <PromptForm client:load models={allModels} tags={allTags} />
+      <div class="mt-4">
+        <label class="block text-xs text-text-3 mb-1 font-medium">Upload Assets</label>
+        <UploadZone client:load />
+      </div>
+    </div>
+  </details>
+
+  <DataTable
+    client:load
+    data={tableItems}
+    searchKeys={['title', 'modelName', 'status']}
+    emptyMessage="No content yet. Create your first prompt above."
+    columns={[
+      { key: 'title', label: 'Title', sortable: true, className: 'text-[#f0f0f0] font-medium' },
+      { key: 'modelName', label: 'Model', sortable: true, className: 'text-[#636363]' },
+      { key: 'status', label: 'Status', sortable: true, type: 'badge' },
+      { key: 'copies', label: 'Copies', sortable: true, type: 'number' },
+      { key: 'dateStr', label: 'Date', sortable: true, className: 'text-[#636363]' },
+      { key: 'slug', label: 'Actions', type: 'link', linkPrefix: '/prompt/' },
+    ]}
+  />
+</AdminLayout>

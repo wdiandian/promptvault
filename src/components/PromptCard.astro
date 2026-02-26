@@ -1,0 +1,61 @@
+---
+interface Props {
+  title: string;
+  slug: string;
+  coverUrl: string | null;
+  coverHeight?: number | null;
+  modelName: string;
+  copies: number;
+  type?: string;
+}
+
+const { title, slug, coverUrl, coverHeight, modelName, copies, type = 'image' } = Astro.props;
+
+function formatCount(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000) return (n / 1_000).toFixed(1) + 'k';
+  return String(n);
+}
+
+const imgSrc = coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 400}`;
+---
+
+<a
+  href={`/prompt/${slug}`}
+  class="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
+>
+  <img
+    src={imgSrc}
+    alt={title}
+    loading="lazy"
+    class="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+  />
+
+  <!-- Hover overlay -->
+  <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
+    <h3 class="text-[.8125rem] font-semibold leading-[1.35] mb-1 line-clamp-2">{title}</h3>
+    <div class="text-[.6875rem] text-white/60 flex items-center gap-2">
+      <span>{modelName}</span>
+      <span>♡ {formatCount(copies)}</span>
+    </div>
+  </div>
+
+  <!-- Copy button -->
+  <button
+    class="absolute top-2 right-2 w-[30px] h-[30px] rounded-sm bg-black/45 backdrop-blur-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-accent border border-white/[.08]"
+    data-copy-card={slug}
+    title="Copy prompt"
+  >
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+      <rect x="9" y="9" width="13" height="13" rx="2"/>
+      <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+    </svg>
+  </button>
+
+  <!-- Video badge -->
+  {type === 'video' && (
+    <span class="absolute top-2 left-2 text-[.6rem] font-semibold px-[7px] py-[3px] rounded-sm bg-black/45 backdrop-blur-[8px] text-white/70 opacity-0 group-hover:opacity-100 transition-opacity duration-150 uppercase tracking-[.04em]">
+      Video
+    </span>
+  )}
+</a>

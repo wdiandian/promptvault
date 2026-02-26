@@ -1,0 +1,91 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import DataTable from '@/components/admin/DataTable.tsx';
+import { db } from '@/lib/db/index';
+import { tags } from '@/lib/db/schema';
+import { asc } from 'drizzle-orm';
+
+const allTags = await db.select().from(tags).orderBy(asc(tags.sort));
+
+const tableData = allTags.map((t) => ({
+  id: t.id,
+  name: t.name,
+  group: t.group ?? '—',
+  sort: t.sort,
+}));
+---
+
+<AdminLayout title="Tags">
+  <h2 class="text-[1.125rem] font-bold tracking-[-0.02em] mb-4">Tag Management</h2>
+
+  <details class="mb-6 bg-bg-card border border-border rounded-[10px] overflow-hidden">
+    <summary class="px-5 py-3 cursor-pointer text-[.8125rem] font-semibold text-accent hover:bg-bg-hover transition-colors">
+      + New Tag
+    </summary>
+    <div class="px-5 py-4 border-t border-border">
+      <form id="tag-form" class="flex gap-3.5 items-end flex-wrap">
+        <div class="flex-1 min-w-[160px]">
+          <label class="block text-xs text-text-3 mb-1 font-medium">Name</label>
+          <input name="name" type="text" required placeholder="e.g. Cyberpunk" class="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3" />
+        </div>
+        <div class="flex-1 min-w-[160px]">
+          <label class="block text-xs text-text-3 mb-1 font-medium">Group</label>
+          <select name="group" class="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text">
+            <option value="">None</option>
+            <option value="Style">Style</option>
+            <option value="Subject">Subject</option>
+            <option value="Camera">Camera</option>
+            <option value="Lighting">Lighting</option>
+            <option value="Material">Material</option>
+          </select>
+        </div>
+        <div class="w-[80px]">
+          <label class="block text-xs text-text-3 mb-1 font-medium">Sort</label>
+          <input name="sort" type="number" value="0" class="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text" />
+        </div>
+        <button type="submit" class="px-[22px] py-2.5 rounded-sm text-[.8125rem] font-semibold bg-accent text-white hover:bg-accent-hover transition-colors">
+          Create
+        </button>
+      </form>
+    </div>
+  </details>
+
+  <div class="flex gap-2 flex-wrap mb-6">
+    {allTags.map((tag) => (
+      <span class="px-3.5 py-1.5 bg-bg-card border border-border rounded-full text-[.8125rem] text-text-2">
+        {tag.name}
+        {tag.group && <span class="text-text-3 ml-1">({tag.group})</span>}
+      </span>
+    ))}
+  </div>
+
+  <DataTable
+    client:load
+    data={tableData}
+    searchKeys={['name', 'group']}
+    emptyMessage="No tags yet. Run the seed script to populate."
+    columns={[
+      { key: 'name', label: 'Name', sortable: true, className: 'text-[#f0f0f0] font-medium' },
+      { key: 'group', label: 'Group', sortable: true, className: 'text-[#636363]' },
+      { key: 'sort', label: 'Sort', sortable: true, type: 'number' },
+    ]}
+  />
+
+  <script>
+    const form = document.getElementById('tag-form') as HTMLFormElement;
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const res = await fetch('/api/admin/tags', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: fd.get('name'),
+          group: fd.get('group') || null,
+          sort: parseInt(fd.get('sort') as string) || 0,
+        }),
+      });
+      if (res.ok) window.location.reload();
+    });
+  </script>
+</AdminLayout>

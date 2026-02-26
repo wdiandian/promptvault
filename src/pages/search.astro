@@ -1,0 +1,55 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import PromptCard from '@/components/PromptCard.astro';
+import { searchPrompts } from '@/lib/db/queries';
+
+const query = Astro.url.searchParams.get('q') ?? '';
+const results = query.trim() ? await searchPrompts(query.trim()) : [];
+---
+
+<BaseLayout title={query ? `"${query}" — Search | PromptVault` : 'Search — PromptVault'}>
+  <div class="max-w-[1100px] mx-auto px-6 py-10">
+    <form role="search" action="/search" class="flex items-center bg-bg-input border border-border rounded-[10px] px-3.5 gap-2 w-full max-w-[500px] mx-auto mb-8 transition-[border] duration-150 focus-within:border-text-3">
+      <svg class="w-4 h-4 text-text-3 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+      </svg>
+      <label for="search-input" class="sr-only">Search</label>
+      <input
+        id="search-input"
+        name="q"
+        type="text"
+        value={query}
+        placeholder="Search prompts, models…"
+        class="border-none bg-transparent py-2.5 w-full text-sm outline-none text-text placeholder:text-text-3"
+        autofocus
+      />
+    </form>
+
+    {query && (
+      <p class="text-text-3 text-sm mb-6 text-center">
+        {results.length} result{results.length !== 1 ? 's' : ''} for "<span class="text-text">{query}</span>"
+      </p>
+    )}
+
+    {results.length > 0 ? (
+      <div class="columns-2 sm:columns-3 lg:columns-4 gap-1.5">
+        {results.map((p) => (
+          <PromptCard
+            title={p.title}
+            slug={p.slug}
+            coverUrl={p.coverUrl}
+            coverHeight={p.coverHeight}
+            modelName={p.modelName}
+            copies={p.copies}
+            type={p.modelType}
+          />
+        ))}
+      </div>
+    ) : query ? (
+      <div class="text-center text-text-3 text-sm py-20">
+        <p class="mb-3">No prompts found.</p>
+        <a href="/gallery" class="text-accent hover:text-accent-hover transition-colors">Browse Gallery</a>
+      </div>
+    ) : null}
+  </div>
+</BaseLayout>

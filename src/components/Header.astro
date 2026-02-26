@@ -1,0 +1,43 @@
+---
+const currentPath = Astro.url.pathname;
+---
+
+<header class="fixed top-0 left-0 right-0 h-[52px] bg-bg/80 backdrop-blur-[20px] flex items-center px-5 z-[100] gap-3 border-b border-border">
+  <a href="/" class="flex items-center gap-[7px] text-base font-bold tracking-[-0.03em] shrink-0">
+    <span class="w-[7px] h-[7px] rounded-full bg-accent"></span>
+    PromptVault
+  </a>
+
+  <nav class="flex gap-0.5 ml-auto">
+    <a
+      href="/"
+      class:list={[
+        'px-3.5 py-[7px] rounded-sm text-[.8125rem] font-medium transition-all duration-150',
+        currentPath === '/' ? 'text-text bg-bg-hover' : 'text-text-3 hover:text-text-2',
+      ]}
+    >
+      Home
+    </a>
+    <a
+      href="/gallery"
+      class:list={[
+        'px-3.5 py-[7px] rounded-sm text-[.8125rem] font-medium transition-all duration-150',
+        currentPath.startsWith('/gallery') ? 'text-text bg-bg-hover' : 'text-text-3 hover:text-text-2',
+      ]}
+    >
+      Gallery
+    </a>
+  </nav>
+
+  <a
+    href="/admin"
+    class:list={[
+      'ml-1 text-xs font-semibold px-3.5 py-1.5 border rounded-sm transition-all duration-150',
+      currentPath.startsWith('/admin')
+        ? 'text-text border-border-hover'
+        : 'text-text-3 border-border hover:text-text hover:border-border-hover',
+    ]}
+  >
+    Admin
+  </a>
+</header>
