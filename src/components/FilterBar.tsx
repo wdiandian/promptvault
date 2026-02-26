@@ -41,7 +41,7 @@ export default function FilterBar({
     return url.toString();
   };
 
-  const handleSearch = (e: { preventDefault: () => void }) => {
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (query.trim()) {
       window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
@@ -59,7 +59,7 @@ export default function FilterBar({
   };
 
   return (
-    <div className="sticky top-[52px] z-40 bg-bg/[.88] backdrop-blur-[14px] border-b border-border px-5 py-2.5 flex items-center gap-2.5 flex-wrap">
+    <div className="sticky top-[52px] z-40 bg-bg/90 backdrop-blur-[14px] border-b border-border px-5 py-2.5 flex items-center gap-2.5 flex-wrap">
       <form
         role="search"
         onSubmit={handleSearch}
@@ -74,16 +74,16 @@ export default function FilterBar({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search…"
-          className="border-none bg-transparent py-2 w-full text-[.8125rem] outline-none text-text placeholder:text-text-3"
+          className="border-none bg-transparent py-2 w-full text-[.875rem] outline-none text-text placeholder:text-text-3"
         />
       </form>
 
       <div className="flex gap-[5px] overflow-x-auto flex-1 tags-hide-scrollbar">
         <button
           onClick={() => (window.location.href = buildUrl({ tags: undefined }))}
-          className={`px-3.5 py-[5px] rounded-full text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
+          className={`px-3.5 py-[5px] rounded-full text-[.8125rem] font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
             currentTags.length === 0
-              ? 'bg-text text-bg font-semibold'
+              ? 'bg-[#1a1a1a] text-white font-semibold'
               : 'text-text-3 hover:text-text-2'
           }`}
         >
@@ -93,9 +93,9 @@ export default function FilterBar({
           <button
             key={tag.id}
             onClick={() => toggleTag(tag.id)}
-            className={`px-3.5 py-[5px] rounded-full text-xs font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
+            className={`px-3.5 py-[5px] rounded-full text-[.8125rem] font-medium whitespace-nowrap transition-all duration-150 cursor-pointer ${
               currentTags.includes(tag.id)
-                ? 'bg-text text-bg font-semibold'
+                ? 'bg-[#1a1a1a] text-white font-semibold'
                 : 'text-text-3 hover:text-text-2'
             }`}
           >
@@ -107,7 +107,7 @@ export default function FilterBar({
       <select
         value={currentSort}
         onChange={(e) => (window.location.href = buildUrl({ sort: e.target.value }))}
-        className="bg-bg-input border border-border rounded-sm px-3 py-1.5 text-xs text-text-3 h-[34px] cursor-pointer"
+        className="bg-bg-input border border-border rounded-sm px-3 py-1.5 text-[.8125rem] text-text-3 h-[34px] cursor-pointer"
       >
         <option value="latest">Latest</option>
         <option value="popular">Popular</option>

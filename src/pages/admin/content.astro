@@ -54,11 +54,11 @@ const tableItems = items.map((item) => ({
     searchKeys={['title', 'modelName', 'status']}
     emptyMessage="No content yet. Create your first prompt above."
     columns={[
-      { key: 'title', label: 'Title', sortable: true, className: 'text-[#f0f0f0] font-medium' },
-      { key: 'modelName', label: 'Model', sortable: true, className: 'text-[#636363]' },
+      { key: 'title', label: 'Title', sortable: true, className: 'text-text font-medium' },
+      { key: 'modelName', label: 'Model', sortable: true, className: 'text-text-3' },
       { key: 'status', label: 'Status', sortable: true, type: 'badge' },
       { key: 'copies', label: 'Copies', sortable: true, type: 'number' },
-      { key: 'dateStr', label: 'Date', sortable: true, className: 'text-[#636363]' },
+      { key: 'dateStr', label: 'Date', sortable: true, className: 'text-text-3' },
       { key: 'slug', label: 'Actions', type: 'link', linkPrefix: '/prompt/' },
     ]}
   />

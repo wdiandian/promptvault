@@ -22,10 +22,10 @@ interface Props {
 }
 
 const DEFAULT_BADGE_COLORS: Record<string, { bg: string; text: string }> = {
-  published: { bg: 'rgba(74,222,128,0.1)', text: '#4ade80' },
-  draft: { bg: 'rgba(99,99,99,0.15)', text: '#636363' },
-  review: { bg: 'rgba(251,146,60,0.1)', text: '#fb923c' },
-  active: { bg: 'rgba(74,222,128,0.1)', text: '#4ade80' },
+  published: { bg: 'rgba(22,163,74,0.08)', text: '#16a34a' },
+  draft: { bg: 'rgba(0,0,0,0.04)', text: '#999999' },
+  review: { bg: 'rgba(234,88,12,0.08)', text: '#ea580c' },
+  active: { bg: 'rgba(22,163,74,0.08)', text: '#16a34a' },
 };
 
 export default function DataTable({
@@ -83,7 +83,7 @@ export default function DataTable({
     switch (type) {
       case 'badge': {
         const colors = col.badgeColors ?? DEFAULT_BADGE_COLORS;
-        const c = colors[String(val).toLowerCase()] ?? { bg: 'rgba(99,99,99,0.15)', text: '#636363' };
+        const c = colors[String(val).toLowerCase()] ?? { bg: 'rgba(0,0,0,0.04)', text: '#999' };
         const label = String(val).charAt(0).toUpperCase() + String(val).slice(1);
         return (
           <span
@@ -101,7 +101,7 @@ export default function DataTable({
         return (
           <a
             href={href}
-            className="text-[.7rem] px-2.5 py-1 rounded-sm border border-[#222] text-[#636363] font-semibold hover:border-[#636363] hover:text-[#a0a0a0] transition-all"
+            className="text-[.75rem] px-2.5 py-1 rounded-sm border border-border text-text-3 font-semibold hover:border-border-hover hover:text-text-2 transition-all"
           >
             View
           </a>
@@ -123,12 +123,12 @@ export default function DataTable({
             value={query}
             onChange={(e) => { setQuery(e.target.value); setPage(0); }}
             placeholder="Search…"
-            className="bg-[#1a1a1a] border border-[#222] rounded-[6px] px-3.5 py-2 text-sm outline-none focus:border-[#e8634a] transition-[border] text-[#f0f0f0] placeholder:text-[#636363] w-[260px]"
+            className="bg-bg-input border border-border rounded-sm px-3.5 py-2 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3 w-[260px]"
           />
         </div>
       )}
 
-      <div className="bg-[#161616] rounded-[10px] overflow-hidden border border-[#222]">
+      <div className="bg-bg-card rounded-[10px] overflow-hidden border border-border">
         <table className="w-full border-collapse">
           <thead>
             <tr>
@@ -136,7 +136,7 @@ export default function DataTable({
                 <th
                   key={col.key}
                   onClick={col.sortable ? () => handleSort(col.key) : undefined}
-                  className={`bg-[#111] px-3.5 py-2.5 text-left text-[.6875rem] font-semibold uppercase tracking-[.03em] text-[#636363] border-b border-[#222] ${col.sortable ? 'cursor-pointer select-none hover:text-[#a0a0a0]' : ''}`}
+                  className={`bg-bg-sidebar px-3.5 py-2.5 text-left text-[.6875rem] font-semibold uppercase tracking-[.03em] text-text-3 border-b border-border ${col.sortable ? 'cursor-pointer select-none hover:text-text-2' : ''}`}
                 >
                   {col.label}
                   {sortKey === col.key && (
@@ -148,9 +148,9 @@ export default function DataTable({
           </thead>
           <tbody>
             {paged.map((item, idx) => (
-              <tr key={item.id ?? idx} className="hover:bg-[#1e1e1e] transition-colors">
+              <tr key={item.id ?? idx} className="hover:bg-bg-hover transition-colors">
                 {columns.map((col) => (
-                  <td key={col.key} className="px-3.5 py-2.5 text-[.8125rem] border-b border-[#222]">
+                  <td key={col.key} className="px-3.5 py-2.5 text-[.875rem] border-b border-border">
                     {renderCell(item, col)}
                   </td>
                 ))}
@@ -160,18 +160,18 @@ export default function DataTable({
         </table>
 
         {paged.length === 0 && (
-          <div className="text-center text-[#636363] text-sm py-10">{emptyMessage}</div>
+          <div className="text-center text-text-3 text-sm py-10">{emptyMessage}</div>
         )}
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-3 text-xs text-[#636363]">
+        <div className="flex items-center justify-between mt-3 text-xs text-text-3">
           <span>{sorted.length} item{sorted.length !== 1 ? 's' : ''}</span>
           <div className="flex gap-1">
             <button
               disabled={page === 0}
               onClick={() => setPage(page - 1)}
-              className="px-3 py-1.5 border border-[#222] rounded-[6px] hover:border-[#333] disabled:opacity-30 transition-all cursor-pointer"
+              className="px-3 py-1.5 border border-border rounded-sm hover:border-border-hover disabled:opacity-30 transition-all cursor-pointer"
             >
               Prev
             </button>
@@ -179,7 +179,7 @@ export default function DataTable({
             <button
               disabled={page >= totalPages - 1}
               onClick={() => setPage(page + 1)}
-              className="px-3 py-1.5 border border-[#222] rounded-[6px] hover:border-[#333] disabled:opacity-30 transition-all cursor-pointer"
+              className="px-3 py-1.5 border border-border rounded-sm hover:border-border-hover disabled:opacity-30 transition-all cursor-pointer"
             >
               Next
             </button>

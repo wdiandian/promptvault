@@ -80,10 +80,10 @@ const tableData = allModels.map((m) => ({
     searchKeys={['name', 'type']}
     emptyMessage="No models yet. Run the seed script to populate."
     columns={[
-      { key: 'name', label: 'Name', sortable: true, className: 'text-[#f0f0f0] font-medium' },
-      { key: 'type', label: 'Type', sortable: true, className: 'text-[#636363] capitalize' },
-      { key: 'version', label: 'Version', className: 'text-[#636363]' },
-      { key: 'pinnedLabel', label: 'Pinned', className: 'text-[#636363]' },
+      { key: 'name', label: 'Name', sortable: true, className: 'text-text font-medium' },
+      { key: 'type', label: 'Type', sortable: true, className: 'text-text-3 capitalize' },
+      { key: 'version', label: 'Version', className: 'text-text-3' },
+      { key: 'pinnedLabel', label: 'Pinned', className: 'text-text-3' },
       { key: 'sort', label: 'Sort', sortable: true, type: 'number' },
       { key: 'status', label: 'Status', type: 'badge' },
     ]}

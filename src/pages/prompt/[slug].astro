@@ -67,7 +67,7 @@ const seoDesc = truncate(prompt.promptText, 150);
   <div class="flex min-h-[calc(100vh-52px)] max-md:flex-col">
     <!-- Media -->
     <div class="flex-[1.2] bg-bg-media flex flex-col items-center justify-center p-10 relative min-h-[520px] max-md:min-h-[300px] max-md:p-6">
-      <a href="/gallery" class="absolute top-4 left-4 flex items-center gap-[5px] text-text-3 text-[.8125rem] font-medium px-3 py-[7px] rounded-sm transition-all duration-150 hover:text-text-2 hover:bg-white/5">
+      <a href="/gallery" class="absolute top-4 left-4 flex items-center gap-[5px] text-text-3 text-[.875rem] font-medium px-3 py-[7px] rounded-sm transition-all duration-150 hover:text-text-2 hover:bg-black/5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
         Back
       </a>
@@ -84,7 +84,7 @@ const seoDesc = truncate(prompt.promptText, 150);
     </div>
 
     <!-- Info -->
-    <div class="w-[440px] border-l border-border overflow-y-auto p-8 flex flex-col gap-5 max-md:w-full max-md:border-l-0 max-md:border-t max-md:border-border">
+    <div class="w-[560px] border-l border-border overflow-y-auto p-8 flex flex-col gap-5 max-md:w-full max-md:border-l-0 max-md:border-t max-md:border-border">
       <nav class="flex items-center gap-1.5 text-[.7rem] text-text-3">
         <a href="/" class="hover:text-text-2 transition-colors">Home</a>
         <span>/</span>
@@ -93,7 +93,7 @@ const seoDesc = truncate(prompt.promptText, 150);
         <span class="text-text-2 truncate max-w-[200px]">{prompt.title}</span>
       </nav>
       <div>
-        <h1 class="text-[1.5rem] font-bold leading-[1.25] tracking-[-0.03em]">{prompt.title}</h1>
+        <h1 class="text-[1.75rem] font-bold leading-[1.25] tracking-[-0.03em]">{prompt.title}</h1>
         <div class="flex items-center gap-2 text-[.8125rem] text-text-3 mt-1.5">
           <span class="w-2 h-2 rounded-full shrink-0" style={`background:${prompt.model.color}`}></span>
           {prompt.model.name} · {prompt.model.version ?? ''} · {prompt.model.type === 'video' ? 'Video' : 'Image'}
@@ -129,7 +129,7 @@ const seoDesc = truncate(prompt.promptText, 150);
           <h4 class="text-[.8125rem] font-semibold text-text-2">Prompt</h4>
           <CopyButton client:load text={prompt.promptText} slug={slug} />
         </div>
-        <div class="px-3.5 py-3 font-mono text-[.8125rem] leading-[1.7] text-text-3 whitespace-pre-wrap break-words max-h-[220px] overflow-y-auto">
+        <div class="px-5 py-4 font-mono text-[.9375rem] leading-[1.8] text-text-2 whitespace-pre-wrap break-words max-h-[400px] overflow-y-auto">
           {prompt.promptText}
         </div>
       </div>
@@ -141,7 +141,7 @@ const seoDesc = truncate(prompt.promptText, 150);
             <h4 class="text-[.8125rem] font-semibold text-text-2">Negative Prompt</h4>
             <CopyButton client:load text={prompt.negativePrompt} slug={slug} />
           </div>
-          <div class="px-3.5 py-3 font-mono text-[.8125rem] leading-[1.7] text-text-3 whitespace-pre-wrap break-words max-h-[220px] overflow-y-auto">
+          <div class="px-5 py-4 font-mono text-[.9375rem] leading-[1.8] text-text-2 whitespace-pre-wrap break-words max-h-[400px] overflow-y-auto">
             {prompt.negativePrompt}
           </div>
         </div>
@@ -153,12 +153,12 @@ const seoDesc = truncate(prompt.promptText, 150);
           <div class="px-3.5 py-2.5 border-b border-border">
             <h4 class="text-[.8125rem] font-semibold text-text-2">Parameters</h4>
           </div>
-          <table class="w-full text-[.8125rem]">
+          <table class="w-full text-[.875rem]">
             <tbody>
               {paramEntries.map(([key, val]) => (
                 <tr>
-                  <td class="px-3.5 py-2 border-b border-border text-text-3 font-medium font-mono w-[110px]">{key}</td>
-                  <td class="px-3.5 py-2 border-b border-border text-text-2 font-mono">{val}</td>
+                  <td class="px-5 py-2.5 border-b border-border text-text-3 font-medium font-mono w-[120px]">{key}</td>
+                  <td class="px-5 py-2.5 border-b border-border text-text font-mono">{val}</td>
                 </tr>
               ))}
             </tbody>
@@ -172,7 +172,7 @@ const seoDesc = truncate(prompt.promptText, 150);
           <div class="px-3.5 py-2.5 border-b border-border">
             <h4 class="text-[.8125rem] font-semibold text-text-2">Notes</h4>
           </div>
-          <div class="px-3.5 py-3 font-mono text-[.8125rem] leading-[1.7] text-text-3 whitespace-pre-wrap break-words">
+          <div class="px-5 py-4 font-mono text-[.875rem] leading-[1.7] text-text-2 whitespace-pre-wrap break-words">
             {prompt.notes}
           </div>
         </div>

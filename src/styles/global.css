@@ -1,44 +1,10 @@
-@import "tailwindcss";
-
-@theme {
-  --font-sans: "DM Sans", system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", "Fira Code", Consolas, monospace;
-
-  --radius: 10px;
-  --radius-sm: 6px;
-  --radius-full: 999px;
-
-  --color-bg: #0c0c0c;
-  --color-bg-card: #161616;
-  --color-bg-hover: #1e1e1e;
-  --color-bg-sidebar: #111111;
-  --color-bg-input: #1a1a1a;
-  --color-bg-media: #0a0a0a;
-
-  --color-border: #222222;
-  --color-border-hover: #333333;
-
-  --color-text: #f0f0f0;
-  --color-text-2: #a0a0a0;
-  --color-text-3: #636363;
-
-  --color-accent: #e8634a;
-  --color-accent-hover: #f07860;
-  --color-accent-soft: rgba(232, 99, 74, 0.1);
-
-  --color-green: #4ade80;
-  --color-green-muted: rgba(74, 222, 128, 0.1);
-
-  --color-orange: #fb923c;
-  --color-orange-muted: rgba(251, 146, 60, 0.1);
-
-  --color-red: #f87171;
-  --color-red-muted: rgba(248, 113, 113, 0.1);
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   html {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   body {
@@ -61,8 +27,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #2a2a2a;
+    background: #d0d0d0;
     border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #b0b0b0;
   }
 
   @media (prefers-reduced-motion: reduce) {
