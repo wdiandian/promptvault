@@ -3,6 +3,8 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import PromptCard from '@/components/PromptCard.astro';
 import { getModels, getPrompts } from '@/lib/db/queries';
 
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
 const allModels = await getModels();
 const pinned = allModels.filter((m) => m.isPinned);
 const { items: trending } = await getPrompts({ sort: 'popular', limit: 8 });
