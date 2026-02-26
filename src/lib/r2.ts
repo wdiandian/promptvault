@@ -9,6 +9,8 @@ function getR2Client() {
       accessKeyId: import.meta.env.R2_ACCESS_KEY_ID ?? process.env.R2_ACCESS_KEY_ID!,
       secretAccessKey: import.meta.env.R2_SECRET_ACCESS_KEY ?? process.env.R2_SECRET_ACCESS_KEY!,
     },
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    responseChecksumValidation: 'WHEN_REQUIRED',
   });
 }
 
@@ -25,9 +27,11 @@ export async function getPresignedUploadUrl(key: string, contentType: string): P
   const command = new PutObjectCommand({
     Bucket: getBucket(),
     Key: key,
-    ContentType: contentType,
   });
-  return getSignedUrl(client, command, { expiresIn: 600 });
+  return getSignedUrl(client, command, {
+    expiresIn: 600,
+    unhoistableHeaders: new Set(['x-amz-checksum-crc32']),
+  });
 }
 
 export function getPublicFileUrl(key: string): string {

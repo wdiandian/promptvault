@@ -38,11 +38,11 @@ export default function UploadZone({ promptItemId, onUploaded }: Props) {
 
     const { presignedUrl, publicUrl } = await presignRes.json();
 
-    // Step 2: Upload directly to R2
+    // Step 2: Upload directly to R2 (no extra headers to avoid CORS preflight issues)
     const uploadRes = await fetch(presignedUrl, {
       method: 'PUT',
-      headers: { 'Content-Type': file.type },
       body: file,
+      mode: 'cors',
     });
 
     if (!uploadRes.ok) {
