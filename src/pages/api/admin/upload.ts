@@ -4,10 +4,31 @@ import { db } from '@/lib/db/index';
 import { assets } from '@/lib/db/schema';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm'];
-const MAX_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_SIZE = 50 * 1024 * 1024;
 
 export const POST: APIRoute = async ({ request }) => {
   try {
+    const contentType = request.headers.get('content-type') ?? '';
+
+    // JSON body: save asset record after presigned upload
+    if (contentType.includes('application/json')) {
+      const body = await request.json();
+      const [asset] = await db.insert(assets).values({
+        type: body.type ?? 'image',
+        url: body.url,
+        format: body.format,
+        size: body.size,
+        alt: body.alt,
+        promptItemId: body.promptItemId || null,
+      }).returning();
+
+      return new Response(JSON.stringify(asset), {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    // FormData body: legacy small file upload through server
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const promptItemId = formData.get('promptItemId') as string | null;
@@ -17,7 +38,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return new Response(JSON.stringify({ error: 'Invalid file type' }), { status: 400 });
+      return new Response(JSON.stringify({ error: `Invalid file type: ${file.type}` }), { status: 400 });
     }
 
     if (file.size > MAX_SIZE) {

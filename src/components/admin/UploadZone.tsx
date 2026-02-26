@@ -19,6 +19,59 @@ export default function UploadZone({ promptItemId, onUploaded }: Props) {
   const [uploaded, setUploaded] = useState<UploadedFile[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const uploadFile = async (file: File): Promise<UploadedFile | null> => {
+    // Step 1: Get presigned URL from our API
+    const presignRes = await fetch('/api/admin/presign', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fileName: file.name,
+        contentType: file.type,
+        size: file.size,
+      }),
+    });
+
+    if (!presignRes.ok) {
+      const err = await presignRes.json().catch(() => ({}));
+      throw new Error(err.error ?? 'Failed to get upload URL');
+    }
+
+    const { presignedUrl, publicUrl } = await presignRes.json();
+
+    // Step 2: Upload directly to R2
+    const uploadRes = await fetch(presignedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type },
+      body: file,
+    });
+
+    if (!uploadRes.ok) {
+      throw new Error('Upload to storage failed');
+    }
+
+    // Step 3: Save asset record in DB
+    if (promptItemId) {
+      await fetch('/api/admin/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: publicUrl,
+          type: file.type.startsWith('video/') ? 'video' : 'image',
+          format: file.name.split('.').pop(),
+          size: file.size,
+          alt: file.name,
+          promptItemId,
+        }),
+      });
+    }
+
+    return {
+      name: file.name,
+      url: publicUrl,
+      type: file.type.startsWith('video/') ? 'video' : 'image',
+    };
+  };
+
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
@@ -27,29 +80,17 @@ export default function UploadZone({ promptItemId, onUploaded }: Props) {
     let done = 0;
 
     for (const file of Array.from(files)) {
-      setProgress(`Uploading ${done + 1}/${total}: ${file.name}`);
-
-      const formData = new FormData();
-      formData.append('file', file);
-      if (promptItemId) formData.append('promptItemId', promptItemId);
+      setProgress(`Uploading ${done + 1}/${total}: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
 
       try {
-        const res = await fetch('/api/admin/upload', { method: 'POST', body: formData });
-        if (res.ok) {
-          const data = await res.json();
-          setUploaded((prev) => [...prev, {
-            name: file.name,
-            url: data.url,
-            type: file.type.startsWith('video/') ? 'video' : 'image',
-          }]);
+        const result = await uploadFile(file);
+        if (result) {
+          setUploaded((prev) => [...prev, result]);
           showToast(`Uploaded: ${file.name}`);
-          onUploaded?.(data.url);
-        } else {
-          const err = await res.json().catch(() => ({}));
-          showToast(`Failed: ${file.name} — ${err.error ?? 'Unknown error'}`);
+          onUploaded?.(result.url);
         }
-      } catch {
-        showToast(`Network error uploading ${file.name}`);
+      } catch (err: any) {
+        showToast(`Failed: ${file.name} — ${err.message}`);
       }
 
       done++;
@@ -117,8 +158,8 @@ export default function UploadZone({ promptItemId, onUploaded }: Props) {
                 <img src={file.url} alt={file.name} className="w-12 h-12 rounded object-cover bg-bg-hover" />
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-[.8125rem] text-text truncate">{file.name}</p>
-                <p className="text-[.7rem] text-text-3">{file.type === 'video' ? 'Video' : 'Image'}</p>
+                <p className="text-[.875rem] text-text truncate">{file.name}</p>
+                <p className="text-[.75rem] text-text-3">{file.type === 'video' ? 'Video' : 'Image'}</p>
               </div>
               <button
                 onClick={() => removeFile(idx)}
