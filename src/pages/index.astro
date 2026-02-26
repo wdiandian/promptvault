@@ -3,9 +3,20 @@ import BaseLayout from '@/layouts/BaseLayout.astro';
 import PromptCard from '@/components/PromptCard.astro';
 import { getModels, getPrompts } from '@/lib/db/queries';
 
-const allModels = await getModels();
-const pinned = allModels.filter((m) => m.isPinned);
-const { items: trending } = await getPrompts({ sort: 'popular', limit: 8 });
+let allModels: any[] = [];
+let pinned: any[] = [];
+let trending: any[] = [];
+let dbError: string | null = null;
+
+try {
+  allModels = await getModels();
+  pinned = allModels.filter((m) => m.isPinned);
+  const result = await getPrompts({ sort: 'popular', limit: 8 });
+  trending = result.items;
+} catch (e: any) {
+  dbError = e?.message ?? String(e);
+  console.error('DB Error:', dbError);
+}
 ---
 
 <BaseLayout
@@ -14,6 +25,13 @@ const { items: trending } = await getPrompts({ sort: 'popular', limit: 8 });
   canonical="https://promptvault.com/"
 >
   <div class="max-w-[1100px] mx-auto px-6">
+    {dbError && (
+      <div class="bg-red-muted border border-red rounded-[10px] p-6 m-6 text-sm">
+        <p class="font-bold text-red mb-2">Database Error</p>
+        <pre class="text-text-3 text-xs whitespace-pre-wrap break-all">{dbError}</pre>
+        <p class="text-text-3 mt-3 text-xs">Check Vercel Environment Variables and Supabase RLS settings.</p>
+      </div>
+    )}
     <!-- Hero -->
     <section class="text-center pt-[100px] pb-[72px]">
       <h1 class="text-[3rem] font-bold tracking-[-0.04em] leading-[1.1] mb-3.5">
