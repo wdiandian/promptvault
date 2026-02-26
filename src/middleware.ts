@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 
-const ADMIN_EMAIL = import.meta.env.ADMIN_EMAIL ?? 'admin@promptvault.com';
+const ADMIN_USER = import.meta.env.ADMIN_USER ?? 'admin';
 const ADMIN_PASSWORD = import.meta.env.ADMIN_PASSWORD ?? '';
 
 function isAdminRoute(pathname: string): boolean {
@@ -38,7 +38,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 });
 
 export function generateSessionToken(): string {
-  const raw = `${ADMIN_EMAIL}:${ADMIN_PASSWORD}:promptvault-session`;
+  const raw = `${ADMIN_USER}:${ADMIN_PASSWORD}:promptvault-session`;
   let hash = 0;
   for (let i = 0; i < raw.length; i++) {
     const char = raw.charCodeAt(i);

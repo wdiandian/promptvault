@@ -3,16 +3,16 @@ import { generateSessionToken } from '@/middleware';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   try {
-    const { email, password } = await request.json();
+    const { username, password } = await request.json();
 
-    const adminEmail = import.meta.env.ADMIN_EMAIL ?? 'admin@promptvault.com';
+    const adminUser = import.meta.env.ADMIN_USER ?? 'admin';
     const adminPassword = import.meta.env.ADMIN_PASSWORD ?? '';
 
     if (!adminPassword) {
       return new Response(JSON.stringify({ error: 'Admin password not configured' }), { status: 500 });
     }
 
-    if (email !== adminEmail || password !== adminPassword) {
+    if (username !== adminUser || password !== adminPassword) {
       return new Response(JSON.stringify({ error: 'Invalid credentials' }), { status: 401 });
     }
 

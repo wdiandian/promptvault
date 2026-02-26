@@ -18,14 +18,14 @@ if (session) {
 
       <form id="login-form">
         <div class="mb-3.5">
-          <label for="email" class="block text-xs text-text-3 mb-1 font-medium">Email</label>
+          <label for="username" class="block text-xs text-text-3 mb-1 font-medium">Username</label>
           <input
-            id="email"
-            name="email"
-            type="email"
+            id="username"
+            name="username"
+            type="text"
             required
             class="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
-            placeholder="admin@promptvault.com"
+            placeholder="Enter username"
           />
         </div>
         <div class="mb-5">
@@ -65,7 +65,7 @@ if (session) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: data.get('email'),
+          username: data.get('username'),
           password: data.get('password'),
         }),
       });
