@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/admin/
-Sitemap: https://promptvault.com/sitemap.xml
+Sitemap: https://getpt.net/sitemap.xml

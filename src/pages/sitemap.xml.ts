@@ -4,7 +4,7 @@ import { promptItems } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
 
 export const GET: APIRoute = async () => {
-  const siteUrl = 'https://promptvault.com';
+  const siteUrl = 'https://getpt.net';
 
   const prompts = await db
     .select({ slug: promptItems.slug, updatedAt: promptItems.updatedAt })

@@ -14,6 +14,6 @@ export const MODEL_COLORS: Record<string, string> = {
 export const SITE = {
   name: 'PromptVault',
   description: 'Curated AI prompts with pixel-perfect reproduction. One-click copy.',
-  url: 'https://promptvault.com',
+  url: 'https://getpt.net',
   ogImage: '/og.jpg',
 };

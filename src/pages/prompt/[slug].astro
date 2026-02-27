@@ -57,8 +57,8 @@ const seoDesc = truncate(prompt.promptText, 150);
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://promptvault.com/' },
-        { '@type': 'ListItem', position: 2, name: prompt.model.name, item: `https://promptvault.com/gallery?model=${prompt.modelId}` },
+        { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://getpt.net/' },
+        { '@type': 'ListItem', position: 2, name: prompt.model.name, item: `https://getpt.net/gallery?model=${prompt.modelId}` },
         { '@type': 'ListItem', position: 3, name: prompt.title },
       ],
     })} />
@@ -192,7 +192,7 @@ const seoDesc = truncate(prompt.promptText, 150);
       <div class="flex gap-1.5 flex-wrap">
         <CopyButton client:load text={fullText} label="Copy All" variant="fill" slug={slug} />
         <CopyButton client:load text={jsonText} label="Copy JSON" variant="outline" slug={slug} />
-        <CopyButton client:load text={`https://promptvault.com/prompt/${slug}`} label="Share" variant="outline" />
+        <CopyButton client:load text={`https://getpt.net/prompt/${slug}`} label="Share" variant="outline" />
       </div>
     </div>
   </div>
