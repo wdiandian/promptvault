@@ -54,27 +54,46 @@ export const POST: APIRoute = async ({ request }) => {
 export const PUT: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { id, title, slug, modelId, promptText, negativePrompt, params, notes, status, coverUrl } = body;
+    const { id } = body;
 
     if (!id) {
       return new Response(JSON.stringify({ error: 'Missing id' }), { status: 400 });
     }
 
+    const updateData: Record<string, any> = { updatedAt: new Date() };
+
+    if (body.title !== undefined) updateData.title = body.title;
+    if (body.slug !== undefined) updateData.slug = body.slug;
+    if (body.modelId !== undefined) updateData.modelId = body.modelId;
+    if (body.promptText !== undefined) updateData.promptText = body.promptText;
+    if (body.negativePrompt !== undefined) updateData.negativePrompt = body.negativePrompt || null;
+    if (body.params !== undefined) updateData.params = body.params || null;
+    if (body.notes !== undefined) updateData.notes = body.notes || null;
+    if (body.status !== undefined) updateData.status = body.status;
+    if (body.coverUrl !== undefined) updateData.coverUrl = body.coverUrl || null;
+
     const [updated] = await db.update(promptItems)
-      .set({
-        title,
-        slug,
-        modelId,
-        promptText,
-        negativePrompt: negativePrompt || null,
-        params: params || null,
-        notes: notes || null,
-        status,
-        coverUrl: coverUrl || null,
-        updatedAt: new Date(),
-      })
+      .set(updateData)
       .where(eq(promptItems.id, id))
       .returning();
+
+    // Update tags if provided
+    if (body.tags && Array.isArray(body.tags)) {
+      await db.delete(promptItemTags).where(eq(promptItemTags.promptItemId, id));
+
+      for (const tagName of body.tags) {
+        if (!tagName) continue;
+        const existing = await db.select().from(tags).where(eq(tags.name, tagName)).limit(1);
+        let tagId: string;
+        if (existing.length > 0) {
+          tagId = existing[0].id;
+        } else {
+          const [newTag] = await db.insert(tags).values({ name: tagName }).returning();
+          tagId = newTag.id;
+        }
+        await db.insert(promptItemTags).values({ promptItemId: id, tagId }).onConflictDoNothing();
+      }
+    }
 
     return new Response(JSON.stringify(updated), {
       headers: { 'Content-Type': 'application/json' },
