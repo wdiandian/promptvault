@@ -1,7 +1,6 @@
 ---
 import AdminLayout from '@/layouts/AdminLayout.astro';
 import PromptForm from '@/components/admin/PromptForm.tsx';
-import UploadZone from '@/components/admin/UploadZone.tsx';
 import DataTable from '@/components/admin/DataTable.tsx';
 import { db } from '@/lib/db/index';
 import { promptItems, models, tags } from '@/lib/db/schema';
@@ -45,10 +44,6 @@ const tableItems = items.map((item) => ({
     </summary>
     <div class="px-5 py-4 border-t border-border">
       <PromptForm client:load models={allModels} tags={allTags} />
-      <div class="mt-4">
-        <label class="block text-xs text-text-3 mb-1 font-medium">Upload Assets</label>
-        <UploadZone client:load />
-      </div>
     </div>
   </details>
 

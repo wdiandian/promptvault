@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, type DragEvent } from 'react';
 import { showToast } from '@/lib/stores';
 import { slugify } from '@/lib/utils';
 
@@ -188,14 +188,28 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
       </div>
 
       <div className="mb-3.5">
-        <label className="block text-xs text-text-3 mb-1 font-medium">Cover URL (paste uploaded image/video URL)</label>
-        <input
-          type="text"
-          value={form.coverUrl}
-          onChange={(e) => updateField('coverUrl', e.target.value)}
-          placeholder="https://cdn.getpt.net/uploads/..."
-          className="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
-        />
+        <label className="block text-xs text-text-3 mb-1 font-medium">Cover Image / Video</label>
+        {form.coverUrl ? (
+          <div className="flex items-center gap-3 bg-bg-input border border-border rounded-sm px-3 py-2 mb-2">
+            {/\.(mp4|webm|mov)$/i.test(form.coverUrl) ? (
+              <video src={form.coverUrl} className="w-16 h-16 rounded object-cover bg-bg-hover" muted preload="metadata" />
+            ) : (
+              <img src={form.coverUrl} alt="Cover" className="w-16 h-16 rounded object-cover bg-bg-hover" />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-[.8125rem] text-text truncate">{form.coverUrl.split('/').pop()}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => updateField('coverUrl', '')}
+              className="text-text-3 hover:text-red text-xs font-medium transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <InlineUpload onUploaded={(url) => updateField('coverUrl', url)} />
+        )}
       </div>
 
       <div className="mb-3.5">
@@ -227,5 +241,75 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
         </button>
       </div>
     </form>
+  );
+}
+
+function InlineUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [progress, setProgress] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleFile = async (file: File) => {
+    setUploading(true);
+    setProgress(`Uploading: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
+
+    try {
+      const presignRes = await fetch('/api/admin/presign', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size }),
+      });
+
+      if (!presignRes.ok) {
+        const err = await presignRes.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Failed to get upload URL');
+      }
+
+      const { presignedUrl, publicUrl } = await presignRes.json();
+
+      const uploadRes = await fetch(presignedUrl, { method: 'PUT', body: file, mode: 'cors' });
+      if (!uploadRes.ok) throw new Error('Upload failed');
+
+      showToast(`Uploaded: ${file.name}`);
+      onUploaded(publicUrl);
+    } catch (err: any) {
+      showToast(`Failed: ${err.message}`);
+    } finally {
+      setUploading(false);
+      setProgress('');
+    }
+  };
+
+  const onDrop = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) handleFile(file);
+  };
+
+  return (
+    <div
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={onDrop}
+      onClick={() => !uploading && inputRef.current?.click()}
+      className={`border-2 border-dashed rounded-sm p-5 text-center text-[.8125rem] transition-all duration-150 ${
+        uploading ? 'cursor-wait opacity-70 border-accent' : 'cursor-pointer border-border hover:border-border-hover text-text-3 hover:text-text-2'
+      }`}
+    >
+      {uploading ? (
+        <div className="flex items-center justify-center gap-2">
+          <span className="inline-block w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+          <span className="text-text-2">{progress}</span>
+        </div>
+      ) : (
+        <span>Drop file here or <span className="text-accent font-semibold">browse</span></span>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+        className="hidden"
+      />
+    </div>
   );
 }
