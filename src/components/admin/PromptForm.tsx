@@ -66,6 +66,15 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
     setSaving(true);
 
     try {
+      let parsedParams = {};
+      try {
+        parsedParams = JSON.parse(form.params || '{}');
+      } catch {
+        showToast('Invalid JSON in Parameters field');
+        setSaving(false);
+        return;
+      }
+
       const method = isEdit ? 'PUT' : 'POST';
       const res = await fetch('/api/admin/prompts', {
         method,
@@ -73,7 +82,7 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
         body: JSON.stringify({
           ...form,
           id: initial?.id,
-          params: JSON.parse(form.params || '{}'),
+          params: parsedParams,
           tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
           coverUrl: form.coverUrl || null,
         }),
@@ -83,10 +92,11 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
         showToast(isEdit ? 'Updated!' : 'Created!');
         window.location.reload();
       } else {
-        showToast('Error saving');
+        const err = await res.json().catch(() => ({}));
+        showToast(`Error: ${err.error ?? 'Save failed'}`);
       }
-    } catch {
-      showToast('Error saving');
+    } catch (err: any) {
+      showToast(`Error: ${err.message ?? 'Save failed'}`);
     } finally {
       setSaving(false);
     }
