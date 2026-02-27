@@ -105,18 +105,16 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
               className="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
             >
               {isVid ? (
-                <div className="relative w-full overflow-hidden" style={{ aspectRatio: '9/16' }}>
-                  <video
-                    src={`${imgSrc}#t=0.5`}
-                    muted
-                    loop
-                    playsInline
-                    preload="metadata"
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
-                    onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
-                    onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0.5; }}
-                  />
-                </div>
+                <video
+                  src={`${imgSrc}#t=0.5`}
+                  muted
+                  loop
+                  playsInline
+                  preload="metadata"
+                  className="w-full block max-h-[500px] object-contain bg-black/5 transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+                  onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
+                  onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0.5; }}
+                />
               ) : (
                 <img
                   src={imgSrc}
