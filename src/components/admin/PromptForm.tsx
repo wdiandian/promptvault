@@ -50,6 +50,33 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
   });
 
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
+
+  const generateTitle = async () => {
+    if (!form.promptText.trim()) {
+      showToast('Enter a prompt first');
+      return;
+    }
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/admin/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ promptText: form.promptText }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Failed');
+      }
+      const { title } = await res.json();
+      updateField('title', title);
+      showToast('Title generated!');
+    } catch (err: any) {
+      showToast(`AI error: ${err.message}`);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const updateField = (field: keyof PromptData, value: string) => {
     setForm((prev) => {
@@ -107,14 +134,25 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
       <div className="flex gap-3.5 mb-3.5">
         <div className="flex-1">
           <label className="block text-xs text-text-3 mb-1 font-medium">Title</label>
-          <input
-            type="text"
-            value={form.title}
-            onChange={(e) => updateField('title', e.target.value)}
-            placeholder="e.g. Cyberpunk City at Sunset"
-            required
-            className="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => updateField('title', e.target.value)}
+              placeholder="e.g. Cyberpunk City at Sunset"
+              required
+              className="flex-1 bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
+            />
+            <button
+              type="button"
+              onClick={generateTitle}
+              disabled={generating || !form.promptText.trim()}
+              className="shrink-0 px-3 py-2 rounded-sm text-[.75rem] font-semibold border border-accent text-accent hover:bg-accent hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+              title="AI generate title from prompt"
+            >
+              {generating ? '...' : 'AI ✦'}
+            </button>
+          </div>
         </div>
         <div className="flex-1">
           <label className="block text-xs text-text-3 mb-1 font-medium">Model</label>
