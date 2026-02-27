@@ -18,22 +18,23 @@ function formatCount(n: number): string {
 }
 
 const imgSrc = coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 400}`;
+const isVideo = /\.(mp4|webm|mov)$/i.test(imgSrc);
 ---
 
 <a
   href={`/prompt/${slug}`}
   class="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
 >
-  {imgSrc.match(/\.(mp4|webm|mov)$/i) ? (
+  {isVideo ? (
     <video
-      src={imgSrc}
+      src={`${imgSrc}#t=0.5`}
       muted
       loop
       playsinline
       preload="metadata"
       class="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
       onmouseenter="this.play()"
-      onmouseleave="this.pause();this.currentTime=0;"
+      onmouseleave="this.pause();this.currentTime=0.5;"
     />
   ) : (
     <img
@@ -44,6 +45,7 @@ const imgSrc = coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight
     />
   )}
 
+  <!-- Hover overlay -->
   <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
     <h3 class="text-[.875rem] font-semibold leading-[1.35] mb-1 line-clamp-2 text-white">{title}</h3>
     <div class="text-[.75rem] text-white/60 flex items-center gap-2">
@@ -52,6 +54,7 @@ const imgSrc = coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight
     </div>
   </div>
 
+  <!-- Copy button -->
   <button
     class="absolute top-2 right-2 w-[30px] h-[30px] rounded-sm bg-black/40 backdrop-blur-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-accent border border-white/[.08]"
     data-copy-card={slug}
@@ -63,8 +66,10 @@ const imgSrc = coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight
     </svg>
   </button>
 
-  {type === 'video' && (
-    <span class="absolute top-2 left-2 text-[.6875rem] font-semibold px-[7px] py-[3px] rounded-sm bg-black/40 backdrop-blur-[8px] text-white/70 opacity-0 group-hover:opacity-100 transition-opacity duration-150 uppercase tracking-[.04em]">
+  <!-- Video play icon (always visible for video cards) -->
+  {isVideo && (
+    <span class="absolute top-2 left-2 flex items-center gap-1 text-[.6875rem] font-semibold px-2 py-[3px] rounded-sm bg-black/50 backdrop-blur-[8px] text-white/80">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
       Video
     </span>
   )}
