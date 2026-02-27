@@ -26,18 +26,16 @@ const isVideo = /\.(mp4|webm|mov)$/i.test(imgSrc);
   class="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
 >
   {isVideo ? (
-    <div class="relative w-full overflow-hidden" style="aspect-ratio:3/4">
-      <video
-        src={`${imgSrc}#t=0.5`}
-        muted
-        loop
-        playsinline
-        preload="metadata"
-        class="absolute inset-0 w-full h-full object-cover transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
-        onmouseenter="this.play()"
-        onmouseleave="this.pause();this.currentTime=0.5;"
-      />
-    </div>
+    <video
+      src={`${imgSrc}#t=0.5`}
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      class="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+      onmouseenter="this.play()"
+      onmouseleave="this.pause();this.currentTime=0.5;"
+    />
   ) : (
     <img
       src={imgSrc}
