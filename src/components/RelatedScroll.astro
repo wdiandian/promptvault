@@ -36,14 +36,16 @@ function formatCount(n: number): string {
             class="group min-w-[200px] max-w-[200px] shrink-0 rounded-sm overflow-hidden relative bg-bg-card"
           >
             {isVideo ? (
-              <video
-                src={`${src}#t=0.5`}
-                muted
-                loop
-                playsinline
-                preload="metadata"
-                class="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
-              />
+              <div class="relative w-full overflow-hidden" style="aspect-ratio:9/16">
+                <video
+                  src={`${src}#t=0.5`}
+                  muted
+                  loop
+                  playsinline
+                  preload="metadata"
+                  class="absolute inset-0 w-full h-full object-cover transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+                />
+              </div>
             ) : (
               <img
                 src={src}
