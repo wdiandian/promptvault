@@ -146,14 +146,32 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
       </div>
 
       <div className="mb-3.5">
-        <label className="block text-xs text-text-3 mb-1 font-medium">Tags (comma separated)</label>
-        <input
-          type="text"
-          value={form.tags}
-          onChange={(e) => updateField('tags', e.target.value)}
-          placeholder="Cyberpunk, Neon, Sunset"
-          className="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
-        />
+        <label className="block text-xs text-text-3 mb-1 font-medium">Tags</label>
+        <div className="flex flex-wrap gap-1.5">
+          {_tags.map((tag) => {
+            const selected = form.tags.split(',').map((t) => t.trim()).filter(Boolean).includes(tag.name);
+            return (
+              <button
+                key={tag.id}
+                type="button"
+                onClick={() => {
+                  const current = form.tags.split(',').map((t) => t.trim()).filter(Boolean);
+                  const next = selected
+                    ? current.filter((t) => t !== tag.name)
+                    : [...current, tag.name];
+                  updateField('tags', next.join(', '));
+                }}
+                className={`px-3 py-1 rounded-full text-[.8125rem] font-medium transition-all duration-150 border ${
+                  selected
+                    ? 'bg-accent text-white border-accent'
+                    : 'bg-bg-input text-text-3 border-border hover:border-border-hover hover:text-text-2'
+                }`}
+              >
+                {tag.name}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mb-3.5">
