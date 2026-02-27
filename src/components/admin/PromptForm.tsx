@@ -23,6 +23,7 @@ interface PromptData {
   notes: string;
   tags: string;
   status: string;
+  coverUrl: string;
 }
 
 interface Props {
@@ -45,6 +46,7 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
     notes: initial?.notes ?? '',
     tags: initial?.tags ?? '',
     status: initial?.status ?? 'draft',
+    coverUrl: initial?.coverUrl ?? '',
   });
 
   const [saving, setSaving] = useState(false);
@@ -73,6 +75,7 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
           id: initial?.id,
           params: JSON.parse(form.params || '{}'),
           tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
+          coverUrl: form.coverUrl || null,
         }),
       });
 
@@ -181,6 +184,17 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
           onChange={(e) => updateField('params', e.target.value)}
           placeholder='{"--ar": "4:5", "--stylize": "750"}'
           className="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3 min-h-[60px] resize-y font-mono"
+        />
+      </div>
+
+      <div className="mb-3.5">
+        <label className="block text-xs text-text-3 mb-1 font-medium">Cover URL (paste uploaded image/video URL)</label>
+        <input
+          type="text"
+          value={form.coverUrl}
+          onChange={(e) => updateField('coverUrl', e.target.value)}
+          placeholder="https://cdn.getpt.net/uploads/..."
+          className="w-full bg-bg-input border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
         />
       </div>
 

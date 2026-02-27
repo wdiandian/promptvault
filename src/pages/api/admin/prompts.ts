@@ -7,7 +7,7 @@ import { slugify } from '@/lib/utils';
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { title, slug, modelId, promptText, negativePrompt, params, notes, status, tags: tagNames } = body;
+    const { title, slug, modelId, promptText, negativePrompt, params, notes, status, tags: tagNames, coverUrl } = body;
 
     const finalSlug = slug || slugify(title);
 
@@ -20,6 +20,7 @@ export const POST: APIRoute = async ({ request }) => {
       params: params || null,
       notes: notes || null,
       status: status || 'draft',
+      coverUrl: coverUrl || null,
     }).returning();
 
     if (tagNames?.length > 0) {
@@ -53,7 +54,7 @@ export const POST: APIRoute = async ({ request }) => {
 export const PUT: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { id, title, slug, modelId, promptText, negativePrompt, params, notes, status } = body;
+    const { id, title, slug, modelId, promptText, negativePrompt, params, notes, status, coverUrl } = body;
 
     if (!id) {
       return new Response(JSON.stringify({ error: 'Missing id' }), { status: 400 });
@@ -69,6 +70,7 @@ export const PUT: APIRoute = async ({ request }) => {
         params: params || null,
         notes: notes || null,
         status,
+        coverUrl: coverUrl || null,
         updatedAt: new Date(),
       })
       .where(eq(promptItems.id, id))

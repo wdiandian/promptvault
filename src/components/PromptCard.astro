@@ -24,12 +24,25 @@ const imgSrc = coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight
   href={`/prompt/${slug}`}
   class="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
 >
-  <img
-    src={imgSrc}
-    alt={title}
-    loading="lazy"
-    class="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
-  />
+  {imgSrc.match(/\.(mp4|webm|mov)$/i) ? (
+    <video
+      src={imgSrc}
+      muted
+      loop
+      playsinline
+      preload="metadata"
+      class="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+      onmouseenter="this.play()"
+      onmouseleave="this.pause();this.currentTime=0;"
+    />
+  ) : (
+    <img
+      src={imgSrc}
+      alt={title}
+      loading="lazy"
+      class="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+    />
+  )}
 
   <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
     <h3 class="text-[.875rem] font-semibold leading-[1.35] mb-1 line-clamp-2 text-white">{title}</h3>

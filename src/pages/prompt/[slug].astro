@@ -74,6 +74,16 @@ const seoDesc = truncate(prompt.promptText, 150);
 
       {prompt.assets.length > 0 ? (
         <ThumbStrip client:load assets={prompt.assets} />
+      ) : prompt.coverUrl?.match(/\.(mp4|webm|mov)$/i) ? (
+        <video
+          src={prompt.coverUrl}
+          controls
+          autoplay
+          loop
+          muted
+          playsinline
+          class="max-h-[72vh] max-w-full rounded-[10px] object-contain bg-black"
+        />
       ) : (
         <img
           src={prompt.coverUrl ?? `https://picsum.photos/seed/${slug}/800/1000`}
