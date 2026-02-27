@@ -24,7 +24,6 @@ const modelsWithCounts = allModels.map((m) => ({
   type: m.type,
   count: countMap[m.id] ?? 0,
 }));
-const pinnedIds = allModels.filter((m) => m.isPinned).map((m) => m.id);
 
 const { items, hasMore } = await getPrompts({
   modelId,
@@ -54,7 +53,6 @@ const pageDesc = selectedModelName
   <div class="flex min-h-[calc(100vh-52px)]">
     <Sidebar
       models={modelsWithCounts}
-      pinnedIds={pinnedIds}
       currentModelId={modelId}
     />
 
