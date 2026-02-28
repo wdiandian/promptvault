@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db } from '@/lib/db/index';
-import { promptItems, promptItemTags, tags } from '@/lib/db/schema';
+import { promptItems, promptItemTags, tags, assets } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { slugify } from '@/lib/utils';
 
@@ -38,6 +38,19 @@ export const POST: APIRoute = async ({ request }) => {
         await db.insert(promptItemTags).values({
           promptItemId: created.id,
           tagId,
+        });
+      }
+    }
+
+    if (body.mediaList?.length > 0) {
+      for (let i = 0; i < body.mediaList.length; i++) {
+        const m = body.mediaList[i];
+        await db.insert(assets).values({
+          type: m.type ?? 'image',
+          url: m.url,
+          alt: title,
+          promptItemId: created.id,
+          sort: i,
         });
       }
     }
@@ -92,6 +105,20 @@ export const PUT: APIRoute = async ({ request }) => {
           tagId = newTag.id;
         }
         await db.insert(promptItemTags).values({ promptItemId: id, tagId }).onConflictDoNothing();
+      }
+    }
+
+    if (body.mediaList && Array.isArray(body.mediaList)) {
+      await db.delete(assets).where(eq(assets.promptItemId, id));
+      for (let i = 0; i < body.mediaList.length; i++) {
+        const m = body.mediaList[i];
+        await db.insert(assets).values({
+          type: m.type ?? 'image',
+          url: m.url,
+          alt: body.title ?? '',
+          promptItemId: id,
+          sort: i,
+        });
       }
     }
 

@@ -12,6 +12,11 @@ interface Tag {
   name: string;
 }
 
+interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+}
+
 interface PromptData {
   id?: string;
   title: string;
@@ -24,6 +29,7 @@ interface PromptData {
   tags: string;
   status: string;
   coverUrl: string;
+  mediaList: MediaItem[];
 }
 
 interface Props {
@@ -36,6 +42,9 @@ interface Props {
 export default function PromptForm({ models, tags: _tags, initial, onClose }: Props) {
   const isEdit = !!initial?.id;
 
+  const initialMedia: MediaItem[] = (initial as any)?.mediaList ?? 
+    (initial?.coverUrl ? [{ url: initial.coverUrl, type: (/\.(mp4|webm|mov)$/i.test(initial.coverUrl) ? 'video' : 'image') as 'image' | 'video' }] : []);
+
   const [form, setForm] = useState<PromptData>({
     title: initial?.title ?? '',
     slug: initial?.slug ?? '',
@@ -47,6 +56,7 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
     tags: initial?.tags ?? '',
     status: initial?.status ?? 'draft',
     coverUrl: initial?.coverUrl ?? '',
+    mediaList: initialMedia,
   });
 
   const [saving, setSaving] = useState(false);
@@ -111,7 +121,8 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
           id: initial?.id,
           params: parsedParams,
           tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
-          coverUrl: form.coverUrl || null,
+          coverUrl: form.mediaList[0]?.url || form.coverUrl || null,
+          mediaList: form.mediaList,
         }),
       });
 
@@ -254,28 +265,60 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
       </div>
 
       <div className="mb-3.5">
-        <label className="block text-xs text-text-3 mb-1 font-medium">Cover Image / Video</label>
-        {form.coverUrl ? (
-          <div className="flex items-center gap-3 bg-bg-input border border-border rounded-sm px-3 py-2 mb-2">
-            {/\.(mp4|webm|mov)$/i.test(form.coverUrl) ? (
-              <video src={form.coverUrl} className="w-16 h-16 rounded object-cover bg-bg-hover" muted preload="metadata" />
-            ) : (
-              <img src={form.coverUrl} alt="Cover" className="w-16 h-16 rounded object-cover bg-bg-hover" />
-            )}
-            <div className="flex-1 min-w-0">
-              <p className="text-[.8125rem] text-text truncate">{form.coverUrl.split('/').pop()}</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => updateField('coverUrl', '')}
-              className="text-text-3 hover:text-red text-xs font-medium transition-colors"
-            >
-              Remove
-            </button>
+        <label className="block text-xs text-text-3 mb-1 font-medium">
+          Media ({form.mediaList.length} file{form.mediaList.length !== 1 ? 's' : ''})
+          {form.mediaList.length > 0 && <span className="text-text-3 font-normal"> — first = cover</span>}
+        </label>
+
+        {form.mediaList.length > 0 && (
+          <div className="space-y-1.5 mb-2">
+            {form.mediaList.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-3 bg-bg-input border border-border rounded-sm px-3 py-2">
+                {item.type === 'video' ? (
+                  <video src={item.url} className="w-14 h-14 rounded object-cover bg-bg-hover" muted preload="metadata" />
+                ) : (
+                  <img src={item.url} alt="" className="w-14 h-14 rounded object-cover bg-bg-hover" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[.8125rem] text-text truncate">{item.url.split('/').pop()}</p>
+                  <p className="text-[.7rem] text-text-3">{idx === 0 ? 'Cover' : `#${idx + 1}`} · {item.type}</p>
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  {idx > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const list = [...form.mediaList];
+                        [list[idx - 1], list[idx]] = [list[idx], list[idx - 1]];
+                        setForm((prev) => ({ ...prev, mediaList: list }));
+                      }}
+                      className="text-text-3 hover:text-text-2 text-xs font-medium transition-colors"
+                      title="Move up (set as cover)"
+                    >↑</button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((prev) => ({
+                        ...prev,
+                        mediaList: prev.mediaList.filter((_, i) => i !== idx),
+                      }));
+                    }}
+                    className="text-text-3 hover:text-red text-xs font-medium transition-colors"
+                  >✕</button>
+                </div>
+              </div>
+            ))}
           </div>
-        ) : (
-          <InlineUpload onUploaded={(url) => updateField('coverUrl', url)} />
         )}
+
+        <InlineUpload onUploaded={(url) => {
+          const type: 'image' | 'video' = /\.(mp4|webm|mov)$/i.test(url) ? 'video' : 'image';
+          setForm((prev) => ({
+            ...prev,
+            mediaList: [...prev.mediaList, { url, type }],
+          }));
+        }} />
       </div>
 
       <div className="mb-3.5">

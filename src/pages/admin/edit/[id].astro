@@ -3,7 +3,7 @@ import AdminLayout from '@/layouts/AdminLayout.astro';
 import PromptForm from '@/components/admin/PromptForm.tsx';
 import UploadZone from '@/components/admin/UploadZone.tsx';
 import { db } from '@/lib/db/index';
-import { promptItems, models, tags, promptItemTags } from '@/lib/db/schema';
+import { promptItems, models, tags, promptItemTags, assets } from '@/lib/db/schema';
 import { eq, asc } from 'drizzle-orm';
 
 const { id } = Astro.params;
@@ -21,6 +21,12 @@ const itemTags = await db
   .innerJoin(tags, eq(promptItemTags.tagId, tags.id))
   .where(eq(promptItemTags.promptItemId, id));
 
+const itemAssets = await db
+  .select({ url: assets.url, type: assets.type })
+  .from(assets)
+  .where(eq(assets.promptItemId, id))
+  .orderBy(asc(assets.sort));
+
 const initial = {
   id: item.id,
   title: item.title,
@@ -33,6 +39,9 @@ const initial = {
   tags: itemTags.map((t) => t.name).join(', '),
   status: item.status,
   coverUrl: item.coverUrl ?? '',
+  mediaList: itemAssets.length > 0
+    ? itemAssets.map((a) => ({ url: a.url, type: a.type as 'image' | 'video' }))
+    : (item.coverUrl ? [{ url: item.coverUrl, type: (/\.(mp4|webm|mov)$/i.test(item.coverUrl) ? 'video' : 'image') as 'image' | 'video' }] : []),
 };
 ---
 
