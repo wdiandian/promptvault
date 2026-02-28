@@ -358,41 +358,47 @@ function InlineUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
   const [progress, setProgress] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFile = async (file: File) => {
-    setUploading(true);
-    setProgress(`Uploading: ${file.name} (${(file.size / 1024 / 1024).toFixed(1)} MB)`);
-
+  const uploadOne = async (file: File): Promise<string | null> => {
     try {
       const presignRes = await fetch('/api/admin/presign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fileName: file.name, contentType: file.type, size: file.size }),
       });
-
       if (!presignRes.ok) {
         const err = await presignRes.json().catch(() => ({}));
         throw new Error(err.error ?? 'Failed to get upload URL');
       }
-
       const { presignedUrl, publicUrl } = await presignRes.json();
-
       const uploadRes = await fetch(presignedUrl, { method: 'PUT', body: file, mode: 'cors' });
       if (!uploadRes.ok) throw new Error('Upload failed');
-
-      showToast(`Uploaded: ${file.name}`);
-      onUploaded(publicUrl);
+      return publicUrl;
     } catch (err: any) {
-      showToast(`Failed: ${err.message}`);
-    } finally {
-      setUploading(false);
-      setProgress('');
+      showToast(`Failed: ${file.name} — ${err.message}`);
+      return null;
     }
+  };
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploading(true);
+    const list = Array.from(files);
+    for (let i = 0; i < list.length; i++) {
+      setProgress(`Uploading ${i + 1}/${list.length}: ${list[i].name}`);
+      const url = await uploadOne(list[i]);
+      if (url) {
+        onUploaded(url);
+        showToast(`Uploaded: ${list[i].name}`);
+      }
+    }
+    setUploading(false);
+    setProgress('');
+    if (inputRef.current) inputRef.current.value = '';
   };
 
   const onDrop = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) handleFile(file);
+    handleFiles(e.dataTransfer.files);
   };
 
   return (
@@ -410,13 +416,14 @@ function InlineUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
           <span className="text-text-2">{progress}</span>
         </div>
       ) : (
-        <span>Drop file here or <span className="text-accent font-semibold">browse</span></span>
+        <span>Drop files here or <span className="text-accent font-semibold">browse</span> (multi-select supported)</span>
       )}
       <input
         ref={inputRef}
         type="file"
+        multiple
         accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+        onChange={(e) => handleFiles(e.target.files)}
         className="hidden"
       />
     </div>
