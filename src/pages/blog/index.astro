@@ -1,0 +1,58 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { db } from '@/lib/db/index';
+import { blogPosts } from '@/lib/db/schema';
+import { eq, desc } from 'drizzle-orm';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const posts = await db
+  .select()
+  .from(blogPosts)
+  .where(eq(blogPosts.status, 'published'))
+  .orderBy(desc(blogPosts.createdAt));
+---
+
+<BaseLayout
+  title="Blog — AI Prompt Tips, Tutorials & News | GetPT"
+  description="Learn how to write better AI prompts, compare models, and stay updated with the latest in AI image and video generation."
+  canonical="https://getpt.net/blog"
+>
+  <div class="max-w-[800px] mx-auto px-6 py-12">
+    <h1 class="text-[2rem] font-bold tracking-[-0.03em] mb-2">Blog</h1>
+    <p class="text-text-3 text-[.9375rem] mb-10">Tips, tutorials, and news about AI prompt engineering.</p>
+
+    {posts.length > 0 ? (
+      <div class="space-y-6">
+        {posts.map((post) => (
+          <a
+            href={`/blog/${post.slug}`}
+            class="block group bg-bg-card border border-border rounded-[10px] overflow-hidden hover:border-border-hover transition-all duration-150"
+          >
+            {post.coverUrl && (
+              <img
+                src={post.coverUrl}
+                alt={post.title}
+                class="w-full h-[200px] object-cover"
+                loading="lazy"
+              />
+            )}
+            <div class="p-5">
+              <h2 class="text-[1.125rem] font-bold tracking-[-0.02em] group-hover:text-accent transition-colors mb-1.5">
+                {post.title}
+              </h2>
+              {post.excerpt && (
+                <p class="text-[.875rem] text-text-3 leading-relaxed line-clamp-2 mb-3">{post.excerpt}</p>
+              )}
+              <time class="text-[.75rem] text-text-3" datetime={post.createdAt.toISOString().slice(0, 10)}>
+                {post.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </time>
+            </div>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <p class="text-text-3 text-sm text-center py-16">No articles yet. Check back soon!</p>
+    )}
+  </div>
+</BaseLayout>

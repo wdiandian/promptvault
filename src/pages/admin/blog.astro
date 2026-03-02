@@ -1,0 +1,46 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import DataTable from '@/components/admin/DataTable.tsx';
+import BlogForm from '@/components/admin/BlogForm.tsx';
+import { db } from '@/lib/db/index';
+import { blogPosts } from '@/lib/db/schema';
+import { desc } from 'drizzle-orm';
+
+const posts = await db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt));
+
+const tableData = posts.map((p) => ({
+  id: p.id,
+  title: p.title,
+  slug: p.slug,
+  status: p.status,
+  views: p.views,
+  dateStr: p.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+}));
+---
+
+<AdminLayout title="Blog">
+  <h2 class="text-[1.125rem] font-bold tracking-[-0.02em] mb-4">Blog Management</h2>
+
+  <details class="mb-6 bg-bg-card border border-border rounded-[10px] overflow-hidden">
+    <summary class="px-5 py-3 cursor-pointer text-[.8125rem] font-semibold text-accent hover:bg-bg-hover transition-colors">
+      + New Article
+    </summary>
+    <div class="px-5 py-4 border-t border-border">
+      <BlogForm client:load />
+    </div>
+  </details>
+
+  <DataTable
+    client:load
+    data={tableData}
+    searchKeys={['title', 'status']}
+    emptyMessage="No blog posts yet."
+    columns={[
+      { key: 'title', label: 'Title', sortable: true, className: 'text-text font-medium' },
+      { key: 'status', label: 'Status', sortable: true, type: 'badge' },
+      { key: 'views', label: 'Views', sortable: true, type: 'number' },
+      { key: 'dateStr', label: 'Date', sortable: true, className: 'text-text-3' },
+      { key: 'id', label: 'Actions', type: 'actions', linkPrefix: '/admin/blog-edit/' },
+    ]}
+  />
+</AdminLayout>

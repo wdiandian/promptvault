@@ -22,10 +22,19 @@ const currentPath = Astro.url.pathname;
       href="/gallery"
       class:list={[
         'px-3.5 py-[7px] rounded-sm text-[.875rem] font-medium transition-all duration-150',
-        currentPath.startsWith('/gallery') ? 'text-text bg-bg-hover' : 'text-text-3 hover:text-text-2',
+        currentPath.startsWith('/gallery') || currentPath.startsWith('/model') ? 'text-text bg-bg-hover' : 'text-text-3 hover:text-text-2',
       ]}
     >
       Gallery
+    </a>
+    <a
+      href="/blog"
+      class:list={[
+        'px-3.5 py-[7px] rounded-sm text-[.875rem] font-medium transition-all duration-150',
+        currentPath.startsWith('/blog') ? 'text-text bg-bg-hover' : 'text-text-3 hover:text-text-2',
+      ]}
+    >
+      Blog
     </a>
   </nav>
 

@@ -2,6 +2,7 @@
 interface ModelItem {
   id: string;
   name: string;
+  slug?: string | null;
   type?: string;
   count?: number;
 }
@@ -9,22 +10,32 @@ interface ModelItem {
 interface Props {
   models: ModelItem[];
   currentModelId?: string;
+  currentModelSlug?: string;
 }
 
-const { models, currentModelId } = Astro.props;
+const { models, currentModelId, currentModelSlug } = Astro.props;
 
 const imageModels = models.filter((m) => m.type !== 'video');
 const videoModels = models.filter((m) => m.type === 'video');
 const totalCount = models.reduce((sum, m) => sum + (m.count ?? 0), 0);
+
+function isActive(m: ModelItem): boolean {
+  if (currentModelSlug && m.slug) return m.slug === currentModelSlug;
+  if (currentModelId) return m.id === currentModelId;
+  return false;
+}
+
+function modelHref(m: ModelItem): string {
+  return m.slug ? `/model/${m.slug}` : `/gallery?model=${m.id}`;
+}
 ---
 
 <aside class="w-[220px] fixed top-[52px] bottom-0 left-0 bg-bg-sidebar border-r border-border overflow-y-auto py-4 z-50 max-md:hidden">
-  <!-- All -->
   <a
     href="/gallery"
     class:list={[
       'flex items-center gap-2.5 mx-3 px-3 py-2.5 rounded-[8px] text-[.875rem] font-medium transition-all duration-100 mb-2',
-      !currentModelId
+      !currentModelId && !currentModelSlug
         ? 'bg-bg-hover text-text font-semibold'
         : 'text-text-2 hover:bg-bg-hover hover:text-text',
     ]}
@@ -34,7 +45,6 @@ const totalCount = models.reduce((sum, m) => sum + (m.count ?? 0), 0);
     <span class="ml-auto text-[.75rem] text-text-3 bg-bg px-1.5 py-0.5 rounded-full min-w-[24px] text-center">{totalCount}</span>
   </a>
 
-  <!-- Image Models -->
   {imageModels.length > 0 && (
     <>
       <div class="flex items-center gap-2 px-4 mt-4 mb-2">
@@ -46,10 +56,10 @@ const totalCount = models.reduce((sum, m) => sum + (m.count ?? 0), 0);
       </div>
       {imageModels.map((m) => (
         <a
-          href={`/gallery?model=${m.id}`}
+          href={modelHref(m)}
           class:list={[
             'flex items-center gap-2.5 mx-3 px-3 py-2 rounded-[8px] text-[.8125rem] transition-all duration-100',
-            currentModelId === m.id
+            isActive(m)
               ? 'bg-accent-soft text-accent font-semibold'
               : 'text-text-2 hover:bg-bg-hover hover:text-text',
           ]}
@@ -63,7 +73,6 @@ const totalCount = models.reduce((sum, m) => sum + (m.count ?? 0), 0);
     </>
   )}
 
-  <!-- Video Models -->
   {videoModels.length > 0 && (
     <>
       <div class="flex items-center gap-2 px-4 mt-5 mb-2">
@@ -75,10 +84,10 @@ const totalCount = models.reduce((sum, m) => sum + (m.count ?? 0), 0);
       </div>
       {videoModels.map((m) => (
         <a
-          href={`/gallery?model=${m.id}`}
+          href={modelHref(m)}
           class:list={[
             'flex items-center gap-2.5 mx-3 px-3 py-2 rounded-[8px] text-[.8125rem] transition-all duration-100',
-            currentModelId === m.id
+            isActive(m)
               ? 'bg-accent-soft text-accent font-semibold'
               : 'text-text-2 hover:bg-bg-hover hover:text-text',
           ]}

@@ -1,0 +1,123 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import Sidebar from '@/components/Sidebar.astro';
+import FilterBar from '@/components/FilterBar.tsx';
+import MasonryGrid from '@/components/MasonryGrid.tsx';
+import { db } from '@/lib/db/index';
+import { models, promptItems, tags } from '@/lib/db/schema';
+import { eq, desc, asc, sql, and } from 'drizzle-orm';
+import { getModels, getTags, getModelCounts } from '@/lib/db/queries';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300');
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/gallery');
+
+const [model] = await db.select().from(models).where(eq(models.slug, slug)).limit(1);
+if (!model) return Astro.redirect('/gallery');
+
+const sort = (Astro.url.searchParams.get('sort') as 'latest' | 'popular' | 'random') ?? 'latest';
+const tagParams = Astro.url.searchParams.getAll('tags');
+
+const [allModels, allTags, counts] = await Promise.all([
+  getModels(),
+  getTags(),
+  getModelCounts(),
+]);
+
+const countMap = Object.fromEntries(counts.map((c) => [c.modelId, c.count]));
+const modelsWithCounts = allModels.map((m) => ({
+  id: m.id,
+  name: m.name,
+  slug: m.slug,
+  type: m.type,
+  count: countMap[m.id] ?? 0,
+}));
+
+const items = await db
+  .select({
+    id: promptItems.id,
+    title: promptItems.title,
+    slug: promptItems.slug,
+    modelId: promptItems.modelId,
+    promptText: promptItems.promptText,
+    views: promptItems.views,
+    copies: promptItems.copies,
+    coverUrl: promptItems.coverUrl,
+    coverThumbUrl: promptItems.coverThumbUrl,
+    coverWidth: promptItems.coverWidth,
+    coverHeight: promptItems.coverHeight,
+    status: promptItems.status,
+    createdAt: promptItems.createdAt,
+    modelName: models.name,
+    modelColor: models.color,
+    modelType: models.type,
+  })
+  .from(promptItems)
+  .innerJoin(models, eq(promptItems.modelId, models.id))
+  .where(and(eq(promptItems.status, 'published'), eq(promptItems.modelId, model.id)))
+  .orderBy(sort === 'popular' ? desc(promptItems.copies) : sort === 'random' ? sql`RANDOM()` : desc(promptItems.createdAt))
+  .limit(40);
+
+const promptCount = countMap[model.id] ?? 0;
+const seoTitle = `${model.name} Prompts — Best AI ${model.type === 'video' ? 'Video' : 'Image'} Prompts | GetPT`;
+const seoDesc = `Browse ${promptCount} curated ${model.name} prompts with full parameters for pixel-perfect reproduction. One-click copy, no sign-up required.`;
+---
+
+<BaseLayout
+  title={seoTitle}
+  description={seoDesc}
+  canonical={`https://getpt.net/model/${slug}`}
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: `${model.name} Prompts`,
+      description: seoDesc,
+      url: `https://getpt.net/model/${slug}`,
+      mainEntity: {
+        '@type': 'SoftwareApplication',
+        name: model.name,
+        applicationCategory: 'AI Image/Video Generator',
+        url: model.website,
+      },
+    })} />
+  </Fragment>
+
+  <div class="flex min-h-[calc(100vh-52px)]">
+    <Sidebar models={modelsWithCounts} currentModelSlug={slug} />
+
+    <div class="ml-[220px] flex-1 flex flex-col min-w-0 max-md:ml-0">
+      <FilterBar
+        client:load
+        tags={allTags.map((t) => ({ id: t.id, name: t.name }))}
+        currentTags={tagParams}
+        currentSort={sort}
+        baseUrl={`/model/${slug}`}
+      />
+
+      <div class="px-5 pt-5 pb-2">
+        <h1 class="text-[1.5rem] font-bold tracking-[-0.03em]">{model.name} Prompts</h1>
+        <p class="text-[.875rem] text-text-3 mt-1">{promptCount} curated prompt{promptCount !== 1 ? 's' : ''} with full parameters</p>
+      </div>
+
+      {items.length > 0 ? (
+        <MasonryGrid
+          client:load
+          initialItems={items}
+          hasMore={false}
+          modelId={model.id}
+          sort={sort}
+        />
+      ) : (
+        <div class="flex-1 flex items-center justify-center text-text-3 text-sm">
+          <div class="text-center">
+            <p class="mb-3">No prompts yet for {model.name}.</p>
+            <a href="/gallery" class="text-accent hover:text-accent-hover transition-colors">Browse All</a>
+          </div>
+        </div>
+      )}
+    </div>
+  </div>
+</BaseLayout>

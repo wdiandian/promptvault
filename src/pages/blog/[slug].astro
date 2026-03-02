@@ -1,0 +1,128 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import { db } from '@/lib/db/index';
+import { blogPosts } from '@/lib/db/schema';
+import { eq, desc, sql, and } from 'drizzle-orm';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+
+const { slug } = Astro.params;
+if (!slug) return Astro.redirect('/blog');
+
+const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug)).limit(1);
+if (!post) return Astro.redirect('/blog');
+
+await db.update(blogPosts).set({ views: sql`${blogPosts.views} + 1` }).where(eq(blogPosts.id, post.id));
+
+const recentPosts = await db
+  .select({ title: blogPosts.title, slug: blogPosts.slug })
+  .from(blogPosts)
+  .where(and(eq(blogPosts.status, 'published'), sql`${blogPosts.id} != ${post.id}`))
+  .orderBy(desc(blogPosts.createdAt))
+  .limit(3);
+
+const seoDesc = post.excerpt || post.content.slice(0, 150).replace(/[#*\n]/g, '').trim() + '…';
+
+function renderMarkdown(md: string): string {
+  return md
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code>$1</code>')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+    .replace(/^- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+    .replace(/^> (.+)$/gm, '<blockquote><p>$1</p></blockquote>')
+    .replace(/^---$/gm, '<hr />')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" />')
+    .replace(/\n\n/g, '</p><p>')
+    .replace(/^(?!<[hupbolia])(.+)$/gm, '<p>$1</p>')
+    .replace(/<p><\/p>/g, '');
+}
+---
+
+<BaseLayout
+  title={`${post.title} | GetPT Blog`}
+  description={seoDesc}
+  ogImage={post.coverUrl ?? undefined}
+  canonical={`https://getpt.net/blog/${slug}`}
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: post.title,
+      description: seoDesc,
+      image: post.coverUrl,
+      author: { '@type': 'Organization', name: 'GetPT' },
+      publisher: { '@type': 'Organization', name: 'GetPT' },
+      datePublished: post.createdAt.toISOString(),
+      dateModified: post.updatedAt.toISOString(),
+    })} />
+  </Fragment>
+
+  <article class="max-w-[720px] mx-auto px-6 py-12">
+    <nav class="flex items-center gap-1.5 text-[.75rem] text-text-3 mb-6">
+      <a href="/" class="hover:text-text-2 transition-colors">Home</a>
+      <span>/</span>
+      <a href="/blog" class="hover:text-text-2 transition-colors">Blog</a>
+      <span>/</span>
+      <span class="text-text-2 truncate max-w-[300px]">{post.title}</span>
+    </nav>
+
+    {post.coverUrl && (
+      <img
+        src={post.coverUrl}
+        alt={post.title}
+        class="w-full rounded-[10px] mb-8 object-cover max-h-[400px]"
+      />
+    )}
+
+    <h1 class="text-[2rem] font-bold tracking-[-0.03em] leading-[1.2] mb-3">{post.title}</h1>
+
+    <div class="flex items-center gap-4 text-[.8125rem] text-text-3 mb-8">
+      <time datetime={post.createdAt.toISOString().slice(0, 10)}>
+        {post.createdAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+      </time>
+      <span>·</span>
+      <span>{post.views} views</span>
+    </div>
+
+    <div
+      class="prose-custom text-[.9375rem] leading-[1.8] text-text-2"
+      set:html={renderMarkdown(post.content)}
+    />
+
+    {recentPosts.length > 0 && (
+      <div class="mt-12 pt-8 border-t border-border">
+        <h2 class="text-[1.125rem] font-bold tracking-[-0.02em] mb-4">More Articles</h2>
+        <div class="space-y-3">
+          {recentPosts.map((p) => (
+            <a href={`/blog/${p.slug}`} class="block text-[.9375rem] text-text-2 hover:text-accent transition-colors">
+              → {p.title}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+  </article>
+</BaseLayout>
+
+<style is:global>
+  .prose-custom h2 { font-size: 1.375rem; font-weight: 700; margin-top: 2rem; margin-bottom: 0.75rem; color: var(--color-text); letter-spacing: -0.02em; }
+  .prose-custom h3 { font-size: 1.125rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--color-text); }
+  .prose-custom p { margin-bottom: 1rem; }
+  .prose-custom a { color: var(--color-accent); text-decoration: underline; text-underline-offset: 2px; }
+  .prose-custom a:hover { color: var(--color-accent-hover); }
+  .prose-custom ul, .prose-custom ol { margin-bottom: 1rem; padding-left: 1.5rem; }
+  .prose-custom li { margin-bottom: 0.25rem; }
+  .prose-custom blockquote { border-left: 3px solid var(--color-border); padding-left: 1rem; color: var(--color-text-3); margin: 1rem 0; }
+  .prose-custom code { font-family: var(--font-mono); background: var(--color-bg-card); padding: 2px 6px; border-radius: 4px; font-size: 0.875em; }
+  .prose-custom pre { background: var(--color-bg-card); border: 1px solid var(--color-border); border-radius: 8px; padding: 1rem; overflow-x: auto; margin: 1rem 0; }
+  .prose-custom pre code { background: none; padding: 0; }
+  .prose-custom img { border-radius: 8px; margin: 1rem 0; max-width: 100%; }
+  .prose-custom hr { border: none; border-top: 1px solid var(--color-border); margin: 2rem 0; }
+</style>
+

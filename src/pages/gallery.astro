@@ -21,6 +21,7 @@ const countMap = Object.fromEntries(counts.map((c) => [c.modelId, c.count]));
 const modelsWithCounts = allModels.map((m) => ({
   id: m.id,
   name: m.name,
+  slug: m.slug,
   type: m.type,
   count: countMap[m.id] ?? 0,
 }));

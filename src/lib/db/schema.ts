@@ -12,6 +12,7 @@ import {
 export const models = pgTable('models', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text('name').notNull().unique(),
+  slug: text('slug'),
   type: text('type').notNull().default('image'),
   provider: text('provider'),
   version: text('version'),
@@ -84,4 +85,20 @@ export const assets = pgTable('assets', {
   createdAt: timestamp('created_at').notNull().defaultNow(),
 }, (table) => [
   index('idx_asset_prompt').on(table.promptItemId),
+]);
+
+export const blogPosts = pgTable('blog_posts', {
+  id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
+  title: text('title').notNull(),
+  slug: text('slug').notNull().unique(),
+  excerpt: text('excerpt'),
+  content: text('content').notNull(),
+  coverUrl: text('cover_url'),
+  status: text('status').notNull().default('draft'),
+  views: integer('views').notNull().default(0),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+}, (table) => [
+  index('idx_blog_slug').on(table.slug),
+  index('idx_blog_status').on(table.status, table.createdAt),
 ]);
