@@ -15,8 +15,16 @@ export const POST: APIRoute = async ({ request }) => {
     const blogModel = import.meta.env.XAI_BLOG_MODEL ?? process.env.XAI_BLOG_MODEL ?? 'grok-4-1-fast-reasoning';
 
     // Step 1: Fetch the page content
+    // For X/Twitter, YouTube, and other hard-to-scrape sites, skip fetching and let AI use its knowledge
+    const skipFetchDomains = ['x.com', 'twitter.com', 'youtube.com', 'youtu.be', 'instagram.com', 'tiktok.com', 'weixin.qq.com', 'mp.weixin.qq.com'];
+    const urlDomain = new URL(url).hostname.replace('www.', '');
+    const shouldSkipFetch = skipFetchDomains.some((d) => urlDomain === d || urlDomain.endsWith('.' + d));
+
     let pageContent = '';
-    try {
+
+    if (shouldSkipFetch) {
+      pageContent = `URL: ${url}\n\nThis is a social media / video platform link. Use your knowledge to write about the content this URL points to. If you know the specific post or video, describe it. If not, write about the topic suggested by the URL.`;
+    } else try {
       const pageRes = await fetch(url, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
