@@ -8,9 +8,9 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'No URL provided' }), { status: 400 });
     }
 
-    const apiKey = import.meta.env.GLM_API_KEY ?? process.env.GLM_API_KEY;
+    const apiKey = import.meta.env.GROK_API_KEY ?? process.env.GROK_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'GLM API key not configured' }), { status: 500 });
+      return new Response(JSON.stringify({ error: 'Grok API key not configured' }), { status: 500 });
     }
 
     // Step 1: Fetch the page content
@@ -55,7 +55,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Step 2: Generate blog article with GLM-4
-    const blogPrompt = import.meta.env.GLM_BLOG_PROMPT ?? process.env.GLM_BLOG_PROMPT ??
+    const blogPrompt = import.meta.env.GROK_BLOG_PROMPT ?? process.env.GROK_BLOG_PROMPT ??
       `You are a professional blog writer for an AI prompt gallery website called GetPT (getpt.net). 
 Given the content from a web page, write an engaging blog article in English.
 
@@ -73,14 +73,14 @@ Requirements:
 Return your response in this exact JSON format:
 {"title": "Article Title Here", "excerpt": "A 1-2 sentence summary", "content": "Full markdown article content here"}`;
 
-    const glmRes = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
+    const grokRes = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'glm-4-flash',
+        model: 'grok-3-mini-fast',
         messages: [
           { role: 'system', content: blogPrompt },
           { role: 'user', content: `Source URL: ${url}\n\nPage content:\n${pageContent}` },
@@ -90,11 +90,12 @@ Return your response in this exact JSON format:
       }),
     });
 
-    if (!glmRes.ok) {
-      return new Response(JSON.stringify({ error: `GLM API error: ${glmRes.status}` }), { status: 502 });
+    if (!grokRes.ok) {
+      const errText = await grokRes.text().catch(() => '');
+      return new Response(JSON.stringify({ error: `Grok API error: ${grokRes.status} ${errText.slice(0, 200)}` }), { status: 502 });
     }
 
-    const glmData = await glmRes.json();
+    const glmData = await grokRes.json();
     const rawOutput = glmData.choices?.[0]?.message?.content?.trim() ?? '';
 
     // Parse JSON response from GLM
