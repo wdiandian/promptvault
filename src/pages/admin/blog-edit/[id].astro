@@ -1,0 +1,45 @@
+---
+import AdminLayout from '@/layouts/AdminLayout.astro';
+import BlogForm from '@/components/admin/BlogForm.tsx';
+import { db } from '@/lib/db/index';
+import { blogPosts } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/admin/blog');
+
+const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id)).limit(1);
+if (!post) return Astro.redirect('/admin/blog');
+
+const initial = {
+  id: post.id,
+  title: post.title,
+  slug: post.slug,
+  excerpt: post.excerpt ?? '',
+  content: post.content,
+  coverUrl: post.coverUrl ?? '',
+  status: post.status,
+};
+---
+
+<AdminLayout title={`Edit: ${post.title}`}>
+  <div class="max-w-[700px]">
+    <div class="flex items-center gap-3 mb-5">
+      <a href="/admin/blog" class="text-text-3 hover:text-text-2 transition-colors text-sm">
+        ← Back to Blog
+      </a>
+    </div>
+
+    <h2 class="text-[1.125rem] font-bold tracking-[-0.02em] mb-4">Edit Article</h2>
+
+    <div class="bg-bg-card border border-border rounded-[10px] p-5">
+      <BlogForm client:load initial={initial} />
+    </div>
+
+    <div class="mt-4 flex gap-3">
+      <a href={`/blog/${post.slug}`} class="text-sm text-accent hover:text-accent-hover transition-colors">
+        View Live →
+      </a>
+    </div>
+  </div>
+</AdminLayout>
