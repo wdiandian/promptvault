@@ -8,24 +8,23 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'No prompt text provided' }), { status: 400 });
     }
 
-    const apiKey = import.meta.env.XAI_API_KEY ?? process.env.XAI_API_KEY;
+    const apiKey = import.meta.env.GLM_API_KEY ?? process.env.GLM_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'xAI API key not configured' }), { status: 500 });
+      return new Response(JSON.stringify({ error: 'GLM API key not configured' }), { status: 500 });
     }
 
-    const model = import.meta.env.XAI_TITLE_MODEL ?? process.env.XAI_TITLE_MODEL ?? 'grok-4-1-fast-reasoning';
-    const systemPrompt = import.meta.env.XAI_TITLE_PROMPT
-      ?? process.env.XAI_TITLE_PROMPT
+    const systemPrompt = import.meta.env.GLM_TITLE_PROMPT
+      ?? process.env.GLM_TITLE_PROMPT
       ?? 'You are a title generator. Given an AI generation prompt, generate a short English title (5-10 words). Only return the title.';
 
-    const res = await fetch('https://api.x.ai/v1/chat/completions', {
+    const res = await fetch('https://open.bigmodel.cn/api/paas/v4/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model,
+        model: 'glm-4-flash',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: promptText.slice(0, 2000) },
@@ -36,8 +35,7 @@ export const POST: APIRoute = async ({ request }) => {
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      return new Response(JSON.stringify({ error: `API error: ${res.status}` }), { status: 502 });
+      return new Response(JSON.stringify({ error: `GLM API error: ${res.status}` }), { status: 502 });
     }
 
     const data = await res.json();
