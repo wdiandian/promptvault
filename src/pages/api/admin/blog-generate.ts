@@ -1,5 +1,7 @@
 import type { APIRoute } from 'astro';
 
+export const config = { maxDuration: 60 };
+
 export const POST: APIRoute = async ({ request }) => {
   try {
     const { url, context } = await request.json();
@@ -80,53 +82,26 @@ export const POST: APIRoute = async ({ request }) => {
       pageContent = `The URL is: ${url}. Please write a blog article based on what you know about this topic. The URL suggests the content is about: ${url.replace(/https?:\/\//, '').replace(/[\/\-_]/g, ' ')}`;
     }
 
-    // Step 2: Summarize the content first
-    const summaryPrompt = import.meta.env.XAI_SUMMARY_PROMPT ?? process.env.XAI_SUMMARY_PROMPT ??
-      'You are a content analyst. Summarize the following web page content in 300-500 words. Focus on: what is the main topic, key facts, features, announcements, or insights. Be factual and accurate. If user provided a description, prioritize that over scraped content.';
-
-    const summaryRes = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: blogModel,
-        messages: [
-          { role: 'system', content: summaryPrompt },
-          { role: 'user', content: `Source URL: ${url}\n\n${pageContent}` },
-        ],
-        max_tokens: 1000,
-        temperature: 0.3,
-      }),
-    });
-
-    if (!summaryRes.ok) {
-      const errText = await summaryRes.text().catch(() => '');
-      return new Response(JSON.stringify({ error: `Summary API error: ${summaryRes.status} ${errText.slice(0, 200)}` }), { status: 502 });
-    }
-
-    const summaryData = await summaryRes.json();
-    const summary = summaryData.choices?.[0]?.message?.content?.trim() ?? pageContent.slice(0, 1000);
-
-    // Step 3: Generate blog article based on the summary
+    // Step 2: Single API call - summarize then write (avoids Vercel 10s timeout)
     const blogPrompt = import.meta.env.XAI_BLOG_PROMPT ?? process.env.XAI_BLOG_PROMPT ??
-      `You are a professional blog writer for an AI prompt gallery website called GetPT (getpt.net). 
-Based on a content summary, write an engaging blog article in English.
+      `You are a professional blog writer for GetPT (getpt.net), an AI prompt gallery website.
 
-Requirements:
-- Write in Markdown format
-- Start with a compelling introduction
-- Use ## for section headings
-- Include practical tips and insights
-- Keep it informative and SEO-friendly
-- Length: 600-1200 words
-- Tone: professional but approachable
-- If the content is about an AI model or tool, include practical prompt examples
-- End with a conclusion or call-to-action linking to the gallery
+Your task has TWO steps. Do them internally before responding:
 
-Return your response in this exact JSON format:
-{"title": "Article Title Here", "excerpt": "A 1-2 sentence summary", "content": "Full markdown article content here"}`;
+STEP 1 - UNDERSTAND: First, carefully analyze the provided content. Identify the main topic, key facts, features, and insights. Be factual and accurate. If the user provided a description, trust that over scraped content.
+
+STEP 2 - WRITE: Based on your analysis, write an engaging blog article in English.
+
+Article requirements:
+- Markdown format with ## section headings
+- Compelling introduction that hooks the reader
+- Practical tips, insights, or prompt examples where relevant
+- SEO-friendly, informative, professional but approachable tone
+- 600-1200 words
+- End with a conclusion linking to getpt.net gallery
+
+Return ONLY this JSON (no other text):
+{"title": "Article Title", "excerpt": "1-2 sentence summary", "content": "Full markdown article"}`;
 
     const grokRes = await fetch('https://api.x.ai/v1/chat/completions', {
       method: 'POST',
@@ -138,7 +113,7 @@ Return your response in this exact JSON format:
         model: blogModel,
         messages: [
           { role: 'system', content: blogPrompt },
-          { role: 'user', content: `Source URL: ${url}\n\nContent Summary:\n${summary}` },
+          { role: 'user', content: `Source URL: ${url}\n\nContent to analyze:\n${pageContent}` },
         ],
         max_tokens: 4000,
         temperature: 0.7,
@@ -147,7 +122,7 @@ Return your response in this exact JSON format:
 
     if (!grokRes.ok) {
       const errText = await grokRes.text().catch(() => '');
-      return new Response(JSON.stringify({ error: `Blog API error: ${grokRes.status} ${errText.slice(0, 200)}` }), { status: 502 });
+      return new Response(JSON.stringify({ error: `API error: ${grokRes.status} ${errText.slice(0, 200)}` }), { status: 502 });
     }
 
     const glmData = await grokRes.json();
