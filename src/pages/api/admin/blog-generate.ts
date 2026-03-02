@@ -8,10 +8,11 @@ export const POST: APIRoute = async ({ request }) => {
       return new Response(JSON.stringify({ error: 'No URL provided' }), { status: 400 });
     }
 
-    const apiKey = import.meta.env.GROK_API_KEY ?? process.env.GROK_API_KEY;
+    const apiKey = import.meta.env.XAI_API_KEY ?? process.env.XAI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'Grok API key not configured' }), { status: 500 });
+      return new Response(JSON.stringify({ error: 'xAI API key not configured' }), { status: 500 });
     }
+    const blogModel = import.meta.env.XAI_BLOG_MODEL ?? process.env.XAI_BLOG_MODEL ?? 'grok-4-1-fast-reasoning';
 
     // Step 1: Fetch the page content
     let pageContent = '';
@@ -55,7 +56,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     // Step 2: Generate blog article with GLM-4
-    const blogPrompt = import.meta.env.GROK_BLOG_PROMPT ?? process.env.GROK_BLOG_PROMPT ??
+    const blogPrompt = import.meta.env.XAI_BLOG_PROMPT ?? process.env.XAI_BLOG_PROMPT ??
       `You are a professional blog writer for an AI prompt gallery website called GetPT (getpt.net). 
 Given the content from a web page, write an engaging blog article in English.
 
@@ -80,7 +81,7 @@ Return your response in this exact JSON format:
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'grok-3-mini-fast',
+        model: blogModel,
         messages: [
           { role: 'system', content: blogPrompt },
           { role: 'user', content: `Source URL: ${url}\n\nPage content:\n${pageContent}` },
