@@ -34,6 +34,37 @@ export default function BlogForm({ initial }: Props) {
   });
 
   const [saving, setSaving] = useState(false);
+  const [aiUrl, setAiUrl] = useState('');
+  const [generating, setGenerating] = useState(false);
+
+  const generateFromUrl = async () => {
+    if (!aiUrl.trim()) { showToast('Enter a URL'); return; }
+    setGenerating(true);
+    try {
+      const res = await fetch('/api/admin/blog-generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: aiUrl.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Generation failed');
+      }
+      const data = await res.json();
+      setForm((prev) => ({
+        ...prev,
+        title: data.title || prev.title,
+        slug: data.title ? slugify(data.title) : prev.slug,
+        excerpt: data.excerpt || prev.excerpt,
+        content: data.content || prev.content,
+      }));
+      showToast('Article generated! Review and edit before publishing.');
+    } catch (err: any) {
+      showToast(`AI error: ${err.message}`);
+    } finally {
+      setGenerating(false);
+    }
+  };
 
   const updateField = (field: keyof BlogData, value: string) => {
     setForm((prev) => {
@@ -71,6 +102,29 @@ export default function BlogForm({ initial }: Props) {
 
   return (
     <form onSubmit={handleSubmit}>
+      {/* AI Generate from URL */}
+      <div className="mb-5 p-4 bg-bg-hover border border-border rounded-[10px]">
+        <label className="block text-xs text-text-3 mb-1.5 font-medium">AI Generate from URL</label>
+        <div className="flex gap-2">
+          <input
+            type="url"
+            value={aiUrl}
+            onChange={(e) => setAiUrl(e.target.value)}
+            placeholder="Paste a URL to generate article from…"
+            className="flex-1 bg-bg border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
+          />
+          <button
+            type="button"
+            onClick={generateFromUrl}
+            disabled={generating || !aiUrl.trim()}
+            className="shrink-0 px-4 py-2.5 rounded-sm text-[.8125rem] font-semibold border border-accent text-accent hover:bg-accent hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed"
+          >
+            {generating ? 'Generating…' : 'AI Generate ✦'}
+          </button>
+        </div>
+        <p className="text-[.7rem] text-text-3 mt-1.5">Fetches page content, then uses AI to write a blog article. Review and edit before publishing.</p>
+      </div>
+
       <div className="flex gap-3.5 mb-3.5">
         <div className="flex-1">
           <label className="block text-xs text-text-3 mb-1 font-medium">Title</label>
