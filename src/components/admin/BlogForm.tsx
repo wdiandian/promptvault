@@ -35,6 +35,7 @@ export default function BlogForm({ initial }: Props) {
 
   const [saving, setSaving] = useState(false);
   const [aiUrl, setAiUrl] = useState('');
+  const [aiContext, setAiContext] = useState('');
   const [generating, setGenerating] = useState(false);
 
   const generateFromUrl = async () => {
@@ -44,7 +45,7 @@ export default function BlogForm({ initial }: Props) {
       const res = await fetch('/api/admin/blog-generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: aiUrl.trim() }),
+        body: JSON.stringify({ url: aiUrl.trim(), context: aiContext.trim() || undefined }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -105,12 +106,12 @@ export default function BlogForm({ initial }: Props) {
       {/* AI Generate from URL */}
       <div className="mb-5 p-4 bg-bg-hover border border-border rounded-[10px]">
         <label className="block text-xs text-text-3 mb-1.5 font-medium">AI Generate from URL</label>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mb-2">
           <input
             type="url"
             value={aiUrl}
             onChange={(e) => setAiUrl(e.target.value)}
-            placeholder="Paste a URL to generate article from…"
+            placeholder="Paste a URL…"
             className="flex-1 bg-bg border border-border rounded-sm px-3.5 py-2.5 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
           />
           <button
@@ -122,7 +123,13 @@ export default function BlogForm({ initial }: Props) {
             {generating ? 'Generating…' : 'AI Generate ✦'}
           </button>
         </div>
-        <p className="text-[.7rem] text-text-3 mt-1.5">Fetches page content, then uses AI to write a blog article. Review and edit before publishing.</p>
+        <textarea
+          value={aiContext}
+          onChange={(e) => setAiContext(e.target.value)}
+          placeholder="Optional: describe what this link is about to help AI understand the content better (e.g. 'This tweet shows a demo of Seedance 2.0 generating a car commercial video from a text prompt')"
+          className="w-full bg-bg border border-border rounded-sm px-3.5 py-2 text-sm outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3 min-h-[60px] resize-y"
+        />
+        <p className="text-[.7rem] text-text-3 mt-1.5">For social media links (X, YouTube etc.), add a description above so AI knows exactly what the content is about.</p>
       </div>
 
       <div className="flex gap-3.5 mb-3.5">

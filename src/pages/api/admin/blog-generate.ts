@@ -2,7 +2,7 @@ import type { APIRoute } from 'astro';
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const { url } = await request.json();
+    const { url, context } = await request.json();
 
     if (!url?.trim()) {
       return new Response(JSON.stringify({ error: 'No URL provided' }), { status: 400 });
@@ -22,8 +22,10 @@ export const POST: APIRoute = async ({ request }) => {
 
     let pageContent = '';
 
+    const userContext = context ? `\n\nUser-provided description of this content:\n${context}` : '';
+
     if (shouldSkipFetch) {
-      pageContent = `URL: ${url}\n\nThis is a social media / video platform link. Use your knowledge to write about the content this URL points to. If you know the specific post or video, describe it. If not, write about the topic suggested by the URL.`;
+      pageContent = `URL: ${url}${userContext}\n\nThis is a social media / video platform link. Write the article based on the user's description above. If no description is provided, use your knowledge about this URL.`;
     } else try {
       const pageRes = await fetch(url, {
         headers: {
@@ -68,7 +70,7 @@ export const POST: APIRoute = async ({ request }) => {
         .replace(/\s+/g, ' ')
         .trim();
 
-      pageContent = extracted.slice(0, 8000);
+      pageContent = extracted.slice(0, 8000) + userContext;
     } catch (fetchErr: any) {
       return new Response(JSON.stringify({ error: `Fetch error: ${fetchErr.message}` }), { status: 400 });
     }
