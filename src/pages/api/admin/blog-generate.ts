@@ -80,10 +80,39 @@ export const POST: APIRoute = async ({ request }) => {
       pageContent = `The URL is: ${url}. Please write a blog article based on what you know about this topic. The URL suggests the content is about: ${url.replace(/https?:\/\//, '').replace(/[\/\-_]/g, ' ')}`;
     }
 
-    // Step 2: Generate blog article with GLM-4
+    // Step 2: Summarize the content first
+    const summaryPrompt = import.meta.env.XAI_SUMMARY_PROMPT ?? process.env.XAI_SUMMARY_PROMPT ??
+      'You are a content analyst. Summarize the following web page content in 300-500 words. Focus on: what is the main topic, key facts, features, announcements, or insights. Be factual and accurate. If user provided a description, prioritize that over scraped content.';
+
+    const summaryRes = await fetch('https://api.x.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: blogModel,
+        messages: [
+          { role: 'system', content: summaryPrompt },
+          { role: 'user', content: `Source URL: ${url}\n\n${pageContent}` },
+        ],
+        max_tokens: 1000,
+        temperature: 0.3,
+      }),
+    });
+
+    if (!summaryRes.ok) {
+      const errText = await summaryRes.text().catch(() => '');
+      return new Response(JSON.stringify({ error: `Summary API error: ${summaryRes.status} ${errText.slice(0, 200)}` }), { status: 502 });
+    }
+
+    const summaryData = await summaryRes.json();
+    const summary = summaryData.choices?.[0]?.message?.content?.trim() ?? pageContent.slice(0, 1000);
+
+    // Step 3: Generate blog article based on the summary
     const blogPrompt = import.meta.env.XAI_BLOG_PROMPT ?? process.env.XAI_BLOG_PROMPT ??
       `You are a professional blog writer for an AI prompt gallery website called GetPT (getpt.net). 
-Given the content from a web page, write an engaging blog article in English.
+Based on a content summary, write an engaging blog article in English.
 
 Requirements:
 - Write in Markdown format
@@ -109,7 +138,7 @@ Return your response in this exact JSON format:
         model: blogModel,
         messages: [
           { role: 'system', content: blogPrompt },
-          { role: 'user', content: `Source URL: ${url}\n\nPage content:\n${pageContent}` },
+          { role: 'user', content: `Source URL: ${url}\n\nContent Summary:\n${summary}` },
         ],
         max_tokens: 4000,
         temperature: 0.7,
@@ -118,7 +147,7 @@ Return your response in this exact JSON format:
 
     if (!grokRes.ok) {
       const errText = await grokRes.text().catch(() => '');
-      return new Response(JSON.stringify({ error: `Grok API error: ${grokRes.status} ${errText.slice(0, 200)}` }), { status: 502 });
+      return new Response(JSON.stringify({ error: `Blog API error: ${grokRes.status} ${errText.slice(0, 200)}` }), { status: 502 });
     }
 
     const glmData = await grokRes.json();
