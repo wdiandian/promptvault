@@ -19,10 +19,12 @@ export const POST: APIRoute = async ({ request }) => {
     try {
       const pageRes = await fetch(url, {
         headers: {
-          'User-Agent': 'Mozilla/5.0 (compatible; GetPT Bot/1.0)',
-          'Accept': 'text/html,application/xhtml+xml',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.9',
         },
-        signal: AbortSignal.timeout(15000),
+        signal: AbortSignal.timeout(20000),
+        redirect: 'follow',
       });
 
       if (!pageRes.ok) {
@@ -31,28 +33,41 @@ export const POST: APIRoute = async ({ request }) => {
 
       const html = await pageRes.text();
 
-      // Extract text content from HTML (simple strip tags)
-      pageContent = html
+      // Try to extract <article> or <main> content first
+      let extracted = '';
+      const articleMatch = html.match(/<article[\s\S]*?<\/article>/i);
+      const mainMatch = html.match(/<main[\s\S]*?<\/main>/i);
+      const bodyMatch = html.match(/<body[\s\S]*?<\/body>/i);
+
+      const rawHtml = articleMatch?.[0] ?? mainMatch?.[0] ?? bodyMatch?.[0] ?? html;
+
+      extracted = rawHtml
         .replace(/<script[\s\S]*?<\/script>/gi, '')
         .replace(/<style[\s\S]*?<\/style>/gi, '')
+        .replace(/<noscript[\s\S]*?<\/noscript>/gi, '')
         .replace(/<nav[\s\S]*?<\/nav>/gi, '')
         .replace(/<footer[\s\S]*?<\/footer>/gi, '')
         .replace(/<header[\s\S]*?<\/header>/gi, '')
+        .replace(/<aside[\s\S]*?<\/aside>/gi, '')
+        .replace(/<!--[\s\S]*?-->/g, '')
         .replace(/<[^>]+>/g, ' ')
         .replace(/&nbsp;/g, ' ')
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
         .replace(/\s+/g, ' ')
-        .trim()
-        .slice(0, 6000);
+        .trim();
+
+      pageContent = extracted.slice(0, 8000);
     } catch (fetchErr: any) {
       return new Response(JSON.stringify({ error: `Fetch error: ${fetchErr.message}` }), { status: 400 });
     }
 
-    if (pageContent.length < 50) {
-      return new Response(JSON.stringify({ error: 'Page content too short or empty' }), { status: 400 });
+    if (pageContent.length < 30) {
+      // If direct fetch failed, ask AI to generate based on URL alone
+      pageContent = `The URL is: ${url}. Please write a blog article based on what you know about this topic. The URL suggests the content is about: ${url.replace(/https?:\/\//, '').replace(/[\/\-_]/g, ' ')}`;
     }
 
     // Step 2: Generate blog article with GLM-4
