@@ -52,7 +52,11 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
       if (!res.ok) throw new Error('Failed to load');
 
       const data = await res.json();
-      setItems((prev) => [...prev, ...data.items]);
+      setItems((prev) => {
+        const existingIds = new Set(prev.map((i) => i.id));
+        const newItems = data.items.filter((i: any) => !existingIds.has(i.id));
+        return [...prev, ...newItems];
+      });
       setHasMore(data.hasMore);
       offsetRef.current += data.items.length;
     } catch {

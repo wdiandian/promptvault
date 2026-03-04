@@ -18,8 +18,10 @@ export async function getPrompts(opts: {
   sort?: 'latest' | 'popular' | 'random';
   cursor?: string;
   limit?: number;
+  offset?: number;
 } = {}) {
   const limit = opts.limit ?? 20;
+  const offset = opts.offset ?? 0;
   const conditions = [eq(promptItems.status, 'published')];
 
   if (opts.modelId) {
@@ -67,7 +69,7 @@ export async function getPrompts(opts: {
     query = query.orderBy(desc(promptItems.createdAt));
   }
 
-  const results = await query.limit(limit + 1);
+  const results = await query.offset(offset).limit(limit + 1);
   const hasMore = results.length > limit;
   const items = results.slice(0, limit);
   const nextCursor = hasMore && items.length > 0 ? items[items.length - 1].id : null;
