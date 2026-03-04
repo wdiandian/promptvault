@@ -35,6 +35,8 @@ const jsonText = JSON.stringify({
 }, null, 2);
 
 const seoDesc = truncate(prompt.promptText, 150);
+const isVideo = prompt.model.type === 'video' || /\.(mp4|webm|mov)$/i.test(prompt.coverUrl ?? '');
+const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.type === 'video')?.url) : null;
 ---
 
 <BaseLayout
@@ -53,6 +55,18 @@ const seoDesc = truncate(prompt.promptText, 150);
       datePublished: prompt.createdAt.toISOString().slice(0, 10),
       keywords: prompt.tags.map((t) => t.name),
     })} />
+    {isVideo && videoUrl && (
+      <script is:inline type="application/ld+json" set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'VideoObject',
+        name: prompt.title,
+        description: seoDesc,
+        contentUrl: videoUrl,
+        thumbnailUrl: prompt.coverUrl ?? videoUrl,
+        uploadDate: prompt.createdAt.toISOString(),
+        duration: 'PT15S',
+      })} />
+    )}
     <script is:inline type="application/ld+json" set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
@@ -72,11 +86,10 @@ const seoDesc = truncate(prompt.promptText, 150);
         Back
       </a>
 
-      {prompt.assets.length > 0 ? (
-        <ThumbStrip client:load assets={prompt.assets} />
-      ) : prompt.coverUrl?.match(/\.(mp4|webm|mov)$/i) ? (
+      {/* SSR: render primary media directly so crawlers can see it */}
+      {isVideo && videoUrl ? (
         <video
-          src={prompt.coverUrl}
+          src={videoUrl}
           controls
           autoplay
           loop
@@ -90,6 +103,11 @@ const seoDesc = truncate(prompt.promptText, 150);
           alt={prompt.title}
           class="max-h-[72vh] max-w-full rounded-[10px] object-contain"
         />
+      )}
+
+      {/* Client: multi-asset thumbnail strip for switching */}
+      {prompt.assets.length > 1 && (
+        <ThumbStrip client:load assets={prompt.assets} />
       )}
     </div>
 
