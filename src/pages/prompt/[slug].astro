@@ -86,8 +86,15 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
         Back
       </a>
 
-      {/* SSR: render primary media directly so crawlers can see it */}
-      {isVideo && videoUrl ? (
+      {/* SEO: hidden tag for crawlers that don't execute JS */}
+      {isVideo && videoUrl && (
+        <video src={videoUrl} muted playsinline preload="none" class="hidden" />
+      )}
+
+      {/* Visible media */}
+      {prompt.assets.length > 0 ? (
+        <ThumbStrip client:load assets={prompt.assets} />
+      ) : isVideo && videoUrl ? (
         <video
           src={videoUrl}
           controls
@@ -103,11 +110,6 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
           alt={prompt.title}
           class="max-h-[72vh] max-w-full rounded-[10px] object-contain"
         />
-      )}
-
-      {/* Client: multi-asset thumbnail strip for switching */}
-      {prompt.assets.length > 1 && (
-        <ThumbStrip client:load assets={prompt.assets} />
       )}
     </div>
 
