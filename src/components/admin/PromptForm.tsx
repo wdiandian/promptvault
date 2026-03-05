@@ -356,7 +356,35 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
 function InlineUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState('');
+  const [pasteUrl, setPasteUrl] = useState('');
+  const [fetching, setFetching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const fetchFromUrl = async () => {
+    if (!pasteUrl.trim()) return;
+    setFetching(true);
+    setProgress('Fetching image from URL…');
+    try {
+      const res = await fetch('/api/admin/fetch-url', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: pasteUrl.trim() }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? 'Fetch failed');
+      }
+      const data = await res.json();
+      onUploaded(data.url);
+      showToast('Fetched and saved!');
+      setPasteUrl('');
+    } catch (err: any) {
+      showToast(`Failed: ${err.message}`);
+    } finally {
+      setFetching(false);
+      setProgress('');
+    }
+  };
 
   const uploadOne = async (file: File): Promise<string | null> => {
     try {
@@ -402,30 +430,50 @@ function InlineUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
   };
 
   return (
-    <div
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={onDrop}
-      onClick={() => !uploading && inputRef.current?.click()}
-      className={`border-2 border-dashed rounded-sm p-5 text-center text-[.8125rem] transition-all duration-150 ${
-        uploading ? 'cursor-wait opacity-70 border-accent' : 'cursor-pointer border-border hover:border-border-hover text-text-3 hover:text-text-2'
-      }`}
-    >
-      {uploading ? (
-        <div className="flex items-center justify-center gap-2">
-          <span className="inline-block w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="text-text-2">{progress}</span>
-        </div>
-      ) : (
-        <span>Drop files here or <span className="text-accent font-semibold">browse</span> (multi-select supported)</span>
-      )}
-      <input
-        ref={inputRef}
-        type="file"
-        multiple
-        accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
-        onChange={(e) => handleFiles(e.target.files)}
-        className="hidden"
-      />
+    <div className="space-y-2">
+      <div
+        onDragOver={(e) => e.preventDefault()}
+        onDrop={onDrop}
+        onClick={() => !uploading && !fetching && inputRef.current?.click()}
+        className={`border-2 border-dashed rounded-sm p-4 text-center text-[.8125rem] transition-all duration-150 ${
+          uploading || fetching ? 'cursor-wait opacity-70 border-accent' : 'cursor-pointer border-border hover:border-border-hover text-text-3 hover:text-text-2'
+        }`}
+      >
+        {uploading || fetching ? (
+          <div className="flex items-center justify-center gap-2">
+            <span className="inline-block w-4 h-4 border-2 border-accent border-t-transparent rounded-full animate-spin" />
+            <span className="text-text-2">{progress}</span>
+          </div>
+        ) : (
+          <span>Drop files or <span className="text-accent font-semibold">browse</span></span>
+        )}
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"
+          onChange={(e) => handleFiles(e.target.files)}
+          className="hidden"
+        />
+      </div>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={pasteUrl}
+          onChange={(e) => setPasteUrl(e.target.value)}
+          placeholder="Or paste image/video URL…"
+          className="flex-1 bg-bg-input border border-border rounded-sm px-3 py-2 text-[.8125rem] outline-none focus:border-accent transition-[border] text-text placeholder:text-text-3"
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); fetchFromUrl(); } }}
+        />
+        <button
+          type="button"
+          onClick={fetchFromUrl}
+          disabled={fetching || !pasteUrl.trim()}
+          className="shrink-0 px-3 py-2 rounded-sm text-[.75rem] font-semibold border border-border text-text-3 hover:border-accent hover:text-accent transition-all disabled:opacity-30"
+        >
+          {fetching ? '…' : 'Fetch'}
+        </button>
+      </div>
     </div>
   );
 }
