@@ -5,7 +5,7 @@ import MasonryGrid from '@/components/MasonryGrid.tsx';
 import FilterBar from '@/components/FilterBar.tsx';
 import { getModels, getTags, getPrompts, getModelCounts } from '@/lib/db/queries';
 
-Astro.response.headers.set('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=120');
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=86400');
 
 const modelId = Astro.url.searchParams.get('model') ?? undefined;
 const tagParams = Astro.url.searchParams.getAll('tags');

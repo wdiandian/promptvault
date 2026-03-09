@@ -4,7 +4,7 @@ import { db } from '@/lib/db/index';
 import { blogPosts } from '@/lib/db/schema';
 import { eq, desc, sql, and } from 'drizzle-orm';
 
-Astro.response.headers.set('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=600');
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
 
 const { slug } = Astro.params;
 if (!slug) return Astro.redirect('/blog');
