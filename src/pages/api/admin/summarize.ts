@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 
 export const POST: APIRoute = async ({ request }) => {
@@ -52,3 +53,4 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 };
+

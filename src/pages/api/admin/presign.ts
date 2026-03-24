@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { getPresignedUploadUrl, getPublicFileUrl } from '@/lib/r2';
 
@@ -35,3 +36,4 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 };
+

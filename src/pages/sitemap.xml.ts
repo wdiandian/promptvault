@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { db } from '@/lib/db/index';
 import { promptItems, models, blogPosts } from '@/lib/db/schema';

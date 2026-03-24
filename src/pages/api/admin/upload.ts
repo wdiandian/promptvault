@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { uploadToR2 } from '@/lib/r2';
 import { db } from '@/lib/db/index';
@@ -70,3 +71,4 @@ export const POST: APIRoute = async ({ request }) => {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 };
+

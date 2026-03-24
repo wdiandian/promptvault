@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { generateSessionToken } from '@/middleware';
 
@@ -33,3 +34,4 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 };
+

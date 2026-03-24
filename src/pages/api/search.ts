@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 import { searchPrompts } from '@/lib/db/queries';
 
@@ -15,3 +16,4 @@ export const GET: APIRoute = async ({ url }) => {
     headers: { 'Content-Type': 'application/json' },
   });
 };
+

@@ -1,3 +1,4 @@
+export const prerender = false;
 import type { APIRoute } from 'astro';
 
 export const config = { maxDuration: 60 };
@@ -150,3 +151,4 @@ Return ONLY this JSON (no other text):
     return new Response(JSON.stringify({ error: err.message }), { status: 500 });
   }
 };
+
