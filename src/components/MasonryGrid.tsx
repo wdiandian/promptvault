@@ -102,31 +102,38 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
         {items.map((item) => {
           const imgSrc = item.coverUrl ?? `https://picsum.photos/seed/${item.slug}/400/${item.coverHeight ?? 400}`;
           const isVid = /\.(mp4|webm|mov)$/i.test(imgSrc);
+          const w = item.coverWidth ?? 400;
+          const h = item.coverHeight ?? (isVid ? 534 : 500);
+          const ratio = `${w}/${h}`;
           return (
             <a
               key={item.id}
               href={`/prompt/${item.slug}`}
               className="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
             >
-              {isVid ? (
-                <video
-                  src={`${imgSrc}#t=0.5`}
-                  muted
-                  loop
-                  playsInline
-                  preload="metadata"
-                  className="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
-                  onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
-                  onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0.5; }}
-                />
-              ) : (
-                <img
-                  src={imgSrc}
-                  alt={item.title}
-                  loading="lazy"
-                  className="w-full block transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
-                />
-              )}
+              <div style={{ aspectRatio: ratio }} className="w-full overflow-hidden bg-bg-hover">
+                {isVid ? (
+                  <video
+                    src={`${imgSrc}#t=0.5`}
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    className="w-full h-full object-cover transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+                    onMouseEnter={(e) => (e.target as HTMLVideoElement).play()}
+                    onMouseLeave={(e) => { const v = e.target as HTMLVideoElement; v.pause(); v.currentTime = 0.5; }}
+                  />
+                ) : (
+                  <img
+                    src={imgSrc}
+                    alt={item.title}
+                    loading="lazy"
+                    width={w}
+                    height={h}
+                    className="w-full h-full object-cover transition-transform duration-[400ms] ease-[cubic-bezier(0.4,0,0.2,1)] group-hover:scale-[1.03]"
+                  />
+                )}
+              </div>
 
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
                 <h3 className="text-[.875rem] font-semibold leading-[1.35] mb-1 line-clamp-2 text-white">{item.title}</h3>
