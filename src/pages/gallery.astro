@@ -60,7 +60,7 @@ const pageDesc = selectedModelName
 
     <div class="ml-[220px] flex-1 flex flex-col min-w-0 max-md:ml-0">
       <FilterBar
-        client:load
+        client:idle
         tags={allTags.map((t) => ({ id: t.id, name: t.name }))}
         currentTags={tagParams}
         currentSort={sort}
@@ -68,7 +68,7 @@ const pageDesc = selectedModelName
 
       {items.length > 0 ? (
         <MasonryGrid
-          client:load
+          client:idle
           initialItems={items}
           hasMore={hasMore}
           modelId={modelId}

@@ -94,7 +94,7 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
 
       {/* Visible media */}
       {prompt.assets.length > 0 ? (
-        <ThumbStrip client:load assets={prompt.assets} />
+        <ThumbStrip client:visible assets={prompt.assets} />
       ) : isVideo && videoUrl ? (
         <video
           src={videoUrl}
@@ -158,7 +158,7 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
       <div class="bg-bg-card border border-border rounded-[10px] overflow-hidden">
         <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
           <h4 class="text-[.8125rem] font-semibold text-text-2">Prompt</h4>
-          <CopyButton client:load text={prompt.promptText} slug={slug} />
+          <CopyButton client:visible text={prompt.promptText} slug={slug} />
         </div>
         <div class="px-5 py-4 font-mono text-[.9375rem] leading-[1.8] text-text-2 whitespace-pre-wrap break-words max-h-[400px] overflow-y-auto">
           {prompt.promptText}
@@ -170,7 +170,7 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
         <div class="bg-bg-card border border-border rounded-[10px] overflow-hidden">
           <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
             <h4 class="text-[.8125rem] font-semibold text-text-2">Negative Prompt</h4>
-            <CopyButton client:load text={prompt.negativePrompt} slug={slug} />
+            <CopyButton client:visible text={prompt.negativePrompt} slug={slug} />
           </div>
           <div class="px-5 py-4 font-mono text-[.9375rem] leading-[1.8] text-text-2 whitespace-pre-wrap break-words max-h-[400px] overflow-y-auto">
             {prompt.negativePrompt}
@@ -211,9 +211,9 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
 
       <!-- Actions -->
       <div class="flex gap-1.5 flex-wrap">
-        <CopyButton client:load text={fullText} label="Copy All" variant="fill" slug={slug} />
-        <CopyButton client:load text={jsonText} label="Copy JSON" variant="outline" slug={slug} />
-        <CopyButton client:load text={`https://getpt.net/prompt/${slug}`} label="Share" variant="outline" />
+        <CopyButton client:visible text={fullText} label="Copy All" variant="fill" slug={slug} />
+        <CopyButton client:visible text={jsonText} label="Copy JSON" variant="outline" slug={slug} />
+        <CopyButton client:visible text={`https://getpt.net/prompt/${slug}`} label="Share" variant="outline" />
       </div>
     </div>
   </div>
