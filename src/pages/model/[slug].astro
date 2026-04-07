@@ -105,7 +105,7 @@ const seoDesc = `Browse ${promptCount} curated ${model.name} prompts with full p
 
       {items.length > 0 ? (
         <MasonryGrid
-          client:idle
+          client:load
           initialItems={items}
           hasMore={false}
           modelId={model.id}
