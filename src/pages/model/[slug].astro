@@ -3,7 +3,7 @@ export const prerender = false;
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Sidebar from '@/components/Sidebar.astro';
 import FilterBar from '@/components/FilterBar.tsx';
-import MasonryGrid from '@/components/MasonryGrid.tsx';
+import PromptCard from '@/components/PromptCard.astro';
 import { db } from '@/lib/db/index';
 import { models, promptItems, tags } from '@/lib/db/schema';
 import { eq, desc, asc, sql, and } from 'drizzle-orm';
@@ -104,13 +104,20 @@ const seoDesc = `Browse ${promptCount} curated ${model.name} prompts with full p
       </div>
 
       {items.length > 0 ? (
-        <MasonryGrid
-          client:load
-          initialItems={items}
-          hasMore={false}
-          modelId={model.id}
-          sort={sort}
-        />
+        <div class="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-1.5 p-1.5">
+          {items.map((p) => (
+            <PromptCard
+              title={p.title}
+              slug={p.slug}
+              coverUrl={p.coverUrl}
+              coverWidth={p.coverWidth}
+              coverHeight={p.coverHeight}
+              modelName={p.modelName}
+              copies={p.copies}
+              type={p.modelType}
+            />
+          ))}
+        </div>
       ) : (
         <div class="flex-1 flex items-center justify-center text-text-3 text-sm">
           <div class="text-center">

@@ -2,8 +2,9 @@
 export const prerender = false;
 import BaseLayout from '@/layouts/BaseLayout.astro';
 import Sidebar from '@/components/Sidebar.astro';
-import MasonryGrid from '@/components/MasonryGrid.tsx';
+import PromptCard from '@/components/PromptCard.astro';
 import FilterBar from '@/components/FilterBar.tsx';
+import LoadMore from '@/components/LoadMore.tsx';
 import { getModels, getTags, getPrompts, getModelCounts } from '@/lib/db/queries';
 
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=86400');
@@ -39,12 +40,12 @@ const selectedModelName = modelId
   : null;
 
 const pageTitle = selectedModelName
-  ? `${selectedModelName} Prompts — PromptVault`
-  : 'AI Prompt Gallery — PromptVault | Curated Prompts for Midjourney, FLUX, Stable Diffusion & More';
+  ? `${selectedModelName} Prompts — GetPT`
+  : 'AI Prompt Gallery — GetPT';
 
 const pageDesc = selectedModelName
   ? `Browse curated ${selectedModelName} prompts with full parameters for pixel-perfect reproduction.`
-  : 'Browse hundreds of curated AI image & video prompts with full parameters. One-click copy for pixel-perfect reproduction across Midjourney, FLUX, Stable Diffusion, DALL-E, Sora and more.';
+  : 'Browse curated AI image & video prompts with full parameters. One-click copy.';
 ---
 
 <BaseLayout
@@ -67,14 +68,31 @@ const pageDesc = selectedModelName
       />
 
       {items.length > 0 ? (
-        <MasonryGrid
-          client:load
-          initialItems={items}
-          hasMore={hasMore}
-          modelId={modelId}
-          tagIds={tagParams}
-          sort={sort}
-        />
+        <>
+          <div class="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-1.5 p-1.5">
+            {items.map((p) => (
+              <PromptCard
+                title={p.title}
+                slug={p.slug}
+                coverUrl={p.coverUrl}
+                coverWidth={p.coverWidth}
+                coverHeight={p.coverHeight}
+                modelName={p.modelName}
+                copies={p.copies}
+                type={p.modelType}
+              />
+            ))}
+          </div>
+          {hasMore && (
+            <LoadMore
+              client:visible
+              modelId={modelId}
+              tagIds={tagParams}
+              sort={sort}
+              initialOffset={items.length}
+            />
+          )}
+        </>
       ) : (
         <div class="flex-1 flex items-center justify-center text-text-3 text-sm">
           <div class="text-center">
