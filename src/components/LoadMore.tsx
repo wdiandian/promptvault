@@ -64,6 +64,21 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
 
   const isVideo = (url: string) => /\.(mp4|webm|mov)$/i.test(url);
 
+  const handleCopy = async (slug: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const res = await fetch(`/api/prompts/${slug}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      await navigator.clipboard.writeText(data.promptText ?? '');
+      showToast('Copied!');
+      fetch(`/api/prompts/${slug}/copy`, { method: 'POST' });
+    } catch {
+      showToast('Failed to copy');
+    }
+  };
+
   return (
     <>
       {items.length > 0 && (
@@ -96,6 +111,18 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
                     <span>&#9825; {formatCount(item.copies)}</span>
                   </div>
                 </div>
+
+                <button
+                  className="absolute top-2 right-2 w-[30px] h-[30px] rounded-sm bg-black/40 backdrop-blur-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-accent border border-white/[.08]"
+                  onClick={(e) => handleCopy(item.slug, e)}
+                  title="Copy prompt"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/>
+                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                  </svg>
+                </button>
+
                 {vid && (
                   <span className="absolute top-2 left-2 flex items-center gap-1 text-[.6875rem] font-semibold px-2 py-[3px] rounded-sm bg-black/50 backdrop-blur-[8px] text-white/80">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>

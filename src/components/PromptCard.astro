@@ -65,3 +65,25 @@ const h = coverHeight ?? (isVideo ? 534 : 500);
     </span>
   )}
 </a>
+
+<script>
+  import { showToast } from '@/lib/stores';
+
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLElement>('[data-copy-card]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const slug = btn.dataset.copyCard;
+    try {
+      const res = await fetch(`/api/prompts/${slug}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      await navigator.clipboard.writeText(data.promptText ?? '');
+      showToast('Copied!');
+      fetch(`/api/prompts/${slug}/copy`, { method: 'POST' });
+    } catch {
+      showToast('Failed to copy');
+    }
+  });
+</script>
