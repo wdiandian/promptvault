@@ -21,7 +21,7 @@ function formatCount(n: number): string {
 
 const isVideo = type === 'video' || /\.(mp4|webm|mov)$/i.test(coverUrl ?? '');
 const imgSrc = isVideo
-  ? (coverThumbUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 534}`)
+  ? (coverThumbUrl ?? coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 534}`)
   : (coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 500}`);
 const w = coverWidth ?? 400;
 const h = coverHeight ?? (isVideo ? 534 : 500);
