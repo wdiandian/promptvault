@@ -3,6 +3,7 @@ interface Props {
   title: string;
   slug: string;
   coverUrl: string | null;
+  coverThumbUrl?: string | null;
   coverWidth?: number | null;
   coverHeight?: number | null;
   modelName: string;
@@ -10,7 +11,7 @@ interface Props {
   type?: string;
 }
 
-const { title, slug, coverUrl, coverWidth, coverHeight, modelName, copies, type = 'image' } = Astro.props;
+const { title, slug, coverUrl, coverThumbUrl, coverWidth, coverHeight, modelName, copies, type = 'image' } = Astro.props;
 
 function formatCount(n: number): string {
   if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
@@ -18,8 +19,10 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-const imgSrc = coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 400}`;
-const isVideo = /\.(mp4|webm|mov)$/i.test(imgSrc) || type === 'video';
+const isVideo = type === 'video' || /\.(mp4|webm|mov)$/i.test(coverUrl ?? '');
+const imgSrc = isVideo
+  ? (coverThumbUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 534}`)
+  : (coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 500}`);
 const w = coverWidth ?? 400;
 const h = coverHeight ?? (isVideo ? 534 : 500);
 ---
@@ -30,7 +33,7 @@ const h = coverHeight ?? (isVideo ? 534 : 500);
 >
   <div style={`aspect-ratio:${w}/${h}`} class="w-full overflow-hidden bg-bg-hover">
     <img
-      src={isVideo ? `${imgSrc}#t=0.5` : imgSrc}
+      src={imgSrc}
       alt={title}
       width={w}
       height={h}
