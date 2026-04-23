@@ -5,7 +5,7 @@ const POLL_INTERVAL_MS = 3000;
 const POLL_TIMEOUT_MS = 900_000;
 
 function getToken(): string {
-  const token = import.meta.env.HAIYI_TOKEN || process.env.HAIYI_TOKEN;
+  const token = process.env.HAIYI_TOKEN || import.meta.env.HAIYI_TOKEN;
   if (!token) {
     throw new Error('未配置 HAIYI_TOKEN 环境变量');
   }
