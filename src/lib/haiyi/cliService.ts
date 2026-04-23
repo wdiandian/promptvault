@@ -30,7 +30,14 @@ async function post(path: string, body: any, token: string) {
     headers: haiyiHeaders(token),
     body: JSON.stringify(body),
   });
-  const json = await res.json();
+  const text = await res.text();
+  let json: any;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    console.error('[haiyi raw response]', text.slice(0, 200));
+    throw new Error('海艺返回非 JSON 响应，可能 token 无效或过期');
+  }
   if (json?.status?.code !== 10000) {
     console.error('[haiyi raw error]', JSON.stringify(json?.status));
     throw new Error(json?.status?.msg || `API 错误: ${path}`);
@@ -61,6 +68,7 @@ async function createTask(apiIds: any, meta: any, imageUrls: string[] | null, vi
   };
 
   console.log('[createTask] meta FULL:', JSON.stringify(meta, null, 2));
+  console.log('[createTask] token prefix:', token.slice(0, 20));
   const data = await post('/api/v1/task/v5/create', body, token);
   if (!data?.id) throw new Error('创建任务失败，未返回 task id');
   return data.id;
