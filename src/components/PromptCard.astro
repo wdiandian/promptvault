@@ -19,10 +19,12 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-const isVideo = type === 'video' || /\.(mp4|webm|mov)$/i.test(coverUrl ?? '');
-const imgSrc = isVideo
-  ? (coverThumbUrl ?? coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 534}`)
-  : (coverUrl ?? `https://picsum.photos/seed/${slug}/400/${coverHeight ?? 500}`);
+const coverUrlIsVideo = /\.(mp4|webm|mov)$/i.test(coverUrl ?? '');
+const isVideo = type === 'video' || coverUrlIsVideo;
+const fallbackSrc = `https://picsum.photos/seed/${slug}/400/${coverHeight ?? (isVideo ? 534 : 500)}`;
+const mediaSrc = coverUrl ?? fallbackSrc;
+const imageSrc = coverUrlIsVideo ? coverThumbUrl : mediaSrc;
+const canRenderVideo = coverUrlIsVideo && coverUrl;
 const w = coverWidth ?? 400;
 const h = coverHeight ?? (isVideo ? 534 : 500);
 ---
@@ -32,14 +34,33 @@ const h = coverHeight ?? (isVideo ? 534 : 500);
   class="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
 >
   <div style={`aspect-ratio:${w}/${h}`} class="w-full overflow-hidden bg-bg-hover">
-    <img
-      src={imgSrc}
-      alt={title}
-      width={w}
-      height={h}
-      loading="lazy"
-      class="w-full h-full object-cover"
-    />
+    {imageSrc ? (
+      <img
+        src={imageSrc}
+        alt={title}
+        width={w}
+        height={h}
+        loading="lazy"
+        class="w-full h-full object-cover"
+      />
+    ) : canRenderVideo ? (
+      <video
+        src={`${mediaSrc}#t=0.5`}
+        muted
+        playsinline
+        preload="metadata"
+        class="w-full h-full object-cover"
+      />
+    ) : (
+      <img
+        src={fallbackSrc}
+        alt={title}
+        width={w}
+        height={h}
+        loading="lazy"
+        class="w-full h-full object-cover"
+      />
+    )}
   </div>
 
   <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">

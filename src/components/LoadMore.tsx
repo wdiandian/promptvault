@@ -62,7 +62,7 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
     return () => observer.disconnect();
   }, [loadMore]);
 
-  const isVideo = (url: string) => /\.(mp4|webm|mov)$/i.test(url);
+  const isVideoUrl = (url: string | null | undefined) => /\.(mp4|webm|mov)$/i.test(url ?? '');
 
   const handleCopy = async (slug: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -84,8 +84,11 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
       {items.length > 0 && (
         <div className="columns-2 sm:columns-3 lg:columns-4 xl:columns-5 gap-1.5 px-1.5 pb-1.5">
           {items.map((item) => {
-            const imgSrc = item.coverUrl ?? `https://picsum.photos/seed/${item.slug}/400/${item.coverHeight ?? 400}`;
-            const vid = isVideo(imgSrc) || item.modelType === 'video';
+            const fallbackSrc = `https://picsum.photos/seed/${item.slug}/400/${item.coverHeight ?? 400}`;
+            const mediaSrc = item.coverUrl ?? fallbackSrc;
+            const coverIsVideo = isVideoUrl(item.coverUrl);
+            const vid = coverIsVideo || item.modelType === 'video';
+            const imageSrc = coverIsVideo ? item.coverThumbUrl : mediaSrc;
             const w = item.coverWidth ?? 400;
             const h = item.coverHeight ?? (vid ? 534 : 500);
             return (
@@ -95,14 +98,33 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
                 className="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
               >
                 <div style={{ aspectRatio: `${w}/${h}` }} className="w-full overflow-hidden bg-bg-hover">
-                  <img
-                    src={vid ? `${imgSrc}#t=0.5` : imgSrc}
-                    alt={item.title}
-                    width={w}
-                    height={h}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
-                  />
+                  {imageSrc ? (
+                    <img
+                      src={imageSrc}
+                      alt={item.title}
+                      width={w}
+                      height={h}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : coverIsVideo ? (
+                    <video
+                      src={`${mediaSrc}#t=0.5`}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <img
+                      src={fallbackSrc}
+                      alt={item.title}
+                      width={w}
+                      height={h}
+                      loading="lazy"
+                      className="w-full h-full object-cover"
+                    />
+                  )}
                 </div>
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
                   <h3 className="text-[.875rem] font-semibold leading-[1.35] mb-1 line-clamp-2 text-white">{item.title}</h3>
