@@ -34,9 +34,11 @@ const offset = Number(args.get('offset') ?? 0);
 const dryRun = args.has('dry-run');
 const includeAll = args.has('all');
 const delayMs = Number(args.get('delay') ?? 500);
+const modelFilter = String(args.get('model') ?? '').trim();
+const maxImports = Number(args.get('max-imports') ?? args.get('max') ?? limit);
 
 const modelAliases: Record<string, string[]> = {
-  gptimage: ['gpt image 2', 'gpt image', 'gptimage'],
+  gptimage: ['gpt image 2', 'gpt image 1', 'gpt image', 'gptimage'],
   'gpt image': ['gpt image 2', 'gpt image', 'gptimage'],
   'gpt image 1': ['gpt image 2', 'gpt image', 'gptimage'],
   'gpt image 2': ['gpt image 2', 'gpt image', 'gptimage'],
@@ -78,11 +80,12 @@ function textTitle(promptText: string) {
       .replace(/[_-]/g, ' ')
       .replace(/\s+/g, ' ')
       .replace(/^[.:|;\s]+/, '')
+      .replace(/^(type|image type|style|prompt|description|scene|subject|lighting|composition|width|resolution)\s*:\s*/i, '')
       .trim())
     .filter((line) => {
       const compact = line.replace(/[^\p{L}\p{N}]/gu, '');
       if (!/[a-z0-9\u4e00-\u9fff]/i.test(line) || compact.length < 8) return false;
-      if (/^(style|type|image prompt|prompt|description|scene|subject|lighting|composition)\s*:?$/i.test(line)) return false;
+      if (/^((master\s+)?prompt|global settings|style|type|image prompt|description|scene|subject|lighting|composition|width|resolution)\s*:?$/i.test(line)) return false;
       if (/^(act as|you are)\s/i.test(line) && line.length < 90) return false;
       return true;
     });
@@ -232,6 +235,20 @@ function pickModel(importedModel: string, allModels: Array<typeof models.$inferS
   });
 }
 
+function modelMatchesFilter(importedModel: string, filter: string) {
+  if (!filter) return true;
+
+  const normalizedImported = normalize(importedModel);
+  const normalizedFilter = normalize(filter);
+  const importedNames = new Set([normalizedImported, ...(modelAliases[normalizedImported] ?? [])].map(normalize));
+  const filterNames = new Set([normalizedFilter, ...(modelAliases[normalizedFilter] ?? [])].map(normalize));
+
+  for (const name of importedNames) {
+    if (filterNames.has(name)) return true;
+  }
+  return false;
+}
+
 async function ensureTags(db: ReturnType<typeof drizzle>, names: string[]) {
   const uniqueNames = [...new Set(names.map((name) => name.trim()).filter(Boolean))].slice(0, 8);
   if (uniqueNames.length === 0) return [];
@@ -256,7 +273,7 @@ async function main() {
 
   const urls = await getSitemapPromptUrls();
   const selected = (includeAll ? urls.slice(offset) : urls.slice(offset, offset + limit));
-  console.log(`Found ${urls.length} prompt URLs. Processing ${selected.length}. dryRun=${dryRun}`);
+  console.log(`Found ${urls.length} prompt URLs. Processing ${selected.length}. dryRun=${dryRun} model=${modelFilter || 'any'} maxImports=${maxImports}`);
 
   const client = dryRun ? null : postgres(process.env.DATABASE_URL!, { prepare: false });
   const db = client ? drizzle(client) : null;
@@ -264,6 +281,7 @@ async function main() {
 
   let imported = 0;
   let skipped = 0;
+  let filtered = 0;
   let failed = 0;
 
   try {
@@ -274,6 +292,12 @@ async function main() {
         const html = await fetchText(url);
         const item = parseJsonLd(html, url);
         const slug = `meigen-${item.id}`;
+
+        if (!modelMatchesFilter(item.modelName, modelFilter)) {
+          filtered++;
+          continue;
+        }
+
         const model = db ? pickModel(item.modelName, allModels) : null;
 
         if (dryRun) {
@@ -285,6 +309,9 @@ async function main() {
             tags: item.keywords,
           }, null, 2));
           imported++;
+          if (imported >= maxImports) {
+            break;
+          }
           continue;
         }
 
@@ -347,6 +374,10 @@ async function main() {
 
         imported++;
         console.log(`Imported ${slug}: ${item.title}`);
+
+        if (imported >= maxImports) {
+          break;
+        }
       } catch (error) {
         failed++;
         console.error(`Failed ${url}:`, error instanceof Error ? error.message : error);
@@ -356,7 +387,7 @@ async function main() {
     await client?.end();
   }
 
-  console.log(`Done. imported=${imported} skipped=${skipped} failed=${failed}`);
+  console.log(`Done. imported=${imported} skipped=${skipped} filtered=${filtered} failed=${failed}`);
 }
 
 main().catch((error) => {
