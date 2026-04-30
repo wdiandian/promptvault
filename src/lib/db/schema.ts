@@ -26,7 +26,9 @@ export const models = pgTable('models', {
   promptTemplate: text('prompt_template'),
   color: text('color').default('#e8634a'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-});
+}, (table) => [
+  index('idx_models_status_sort').on(table.status, table.isPinned, table.sort),
+]);
 
 export const tags = pgTable('tags', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -34,7 +36,9 @@ export const tags = pgTable('tags', {
   group: text('group'),
   color: text('color'),
   sort: integer('sort').notNull().default(0),
-});
+}, (table) => [
+  index('idx_tags_sort').on(table.sort),
+]);
 
 export const promptItems = pgTable('prompt_items', {
   id: text('id').primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -59,6 +63,9 @@ export const promptItems = pgTable('prompt_items', {
 }, (table) => [
   index('idx_prompt_model').on(table.modelId),
   index('idx_prompt_status_created').on(table.status, table.createdAt),
+  index('idx_prompt_status_copies').on(table.status, table.copies),
+  index('idx_prompt_model_status_created').on(table.modelId, table.status, table.createdAt),
+  index('idx_prompt_model_status_copies').on(table.modelId, table.status, table.copies),
   index('idx_prompt_slug').on(table.slug),
 ]);
 
@@ -67,6 +74,7 @@ export const promptItemTags = pgTable('prompt_item_tags', {
   tagId: text('tag_id').notNull().references(() => tags.id, { onDelete: 'cascade' }),
 }, (table) => [
   primaryKey({ columns: [table.promptItemId, table.tagId] }),
+  index('idx_prompt_item_tags_tag_prompt').on(table.tagId, table.promptItemId),
 ]);
 
 export const assets = pgTable('assets', {

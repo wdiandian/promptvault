@@ -119,6 +119,57 @@ const canonicalUrl = canonical ?? Astro.url.href;
       disableBlockingPageOverlays();
     }
 
+    function setupListStateRestore() {
+      if (window.__promptVaultListStateRestore) return;
+      window.__promptVaultListStateRestore = true;
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+      const storageKey = 'promptvault:list-state';
+      const listPathPattern = /^\/(gallery|model\/|search)/;
+      let scrollSaveTimer;
+
+      const saveListState = () => {
+        if (!listPathPattern.test(location.pathname)) return;
+        sessionStorage.setItem(storageKey, JSON.stringify({
+          href: location.href,
+          scrollY: window.scrollY,
+          savedAt: Date.now(),
+        }));
+      };
+
+      const restoreListState = () => {
+        const raw = sessionStorage.getItem(storageKey);
+        if (!raw) return;
+
+        try {
+          const state = JSON.parse(raw);
+          const isFresh = Date.now() - state.savedAt < 30 * 60 * 1000;
+          if (state.href !== location.href || !isFresh) return;
+          const restore = () => window.scrollTo({ top: state.scrollY, behavior: 'auto' });
+          requestAnimationFrame(restore);
+          window.setTimeout(restore, 80);
+          window.setTimeout(restore, 260);
+        } catch {
+          sessionStorage.removeItem(storageKey);
+        }
+      };
+
+      document.addEventListener('click', (event) => {
+        const link = event.target.closest?.('a[href^="/prompt/"]');
+        if (link) saveListState();
+      }, { capture: true });
+
+      window.addEventListener('scroll', () => {
+        if (!listPathPattern.test(location.pathname)) return;
+        clearTimeout(scrollSaveTimer);
+        scrollSaveTimer = window.setTimeout(saveListState, 120);
+      }, { passive: true });
+
+      document.addEventListener('astro:page-load', restoreListState);
+      window.addEventListener('pagehide', saveListState);
+      restoreListState();
+    }
+
     if (!window.__promptVaultNavigationFeedback) {
       window.__promptVaultNavigationFeedback = true;
       const root = document.documentElement;
@@ -148,6 +199,7 @@ const canonicalUrl = canonical ?? Astro.url.href;
     }
 
     setupPageRuntime();
+    setupListStateRestore();
     window.addEventListener('load', setupPageRuntime);
     document.addEventListener('astro:page-load', setupPageRuntime);
     new MutationObserver(setupPageRuntime).observe(document.body, { childList: true, subtree: true });

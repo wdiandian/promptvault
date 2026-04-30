@@ -6,6 +6,7 @@ interface Props {
   tagIds?: string[];
   sort?: string;
   initialOffset: number;
+  initialCursor?: string | null;
 }
 
 function formatCount(n: number): string {
@@ -13,11 +14,12 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initialOffset }: Props) {
+export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initialOffset, initialCursor = null }: Props) {
   const [items, setItems] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const offsetRef = useRef(initialOffset);
+  const cursorRef = useRef(initialCursor);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const loadMore = useCallback(async () => {
@@ -29,7 +31,11 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
       if (modelId) params.set('modelId', modelId);
       params.set('sort', sort);
       params.set('limit', '20');
-      params.set('cursor', String(offsetRef.current));
+      if (sort === 'random') {
+        params.set('offset', String(offsetRef.current));
+      } else if (cursorRef.current) {
+        params.set('cursor', cursorRef.current);
+      }
       tagIds.forEach((t) => params.append('tagIds', t));
 
       const res = await fetch(`/api/prompts?${params}`);
@@ -42,6 +48,7 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
         return [...prev, ...newItems];
       });
       setHasMore(data.hasMore);
+      cursorRef.current = data.nextCursor;
       offsetRef.current += data.items.length;
     } catch {
       showToast('Failed to load more');

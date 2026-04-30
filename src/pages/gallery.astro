@@ -28,7 +28,7 @@ const modelsWithCounts = allModels.map((m) => ({
   count: countMap[m.id] ?? 0,
 }));
 
-const { items, hasMore } = await getPrompts({
+const { items, hasMore, nextCursor } = await getPrompts({
   modelId,
   tagIds: tagParams.length > 0 ? tagParams : undefined,
   sort,
@@ -91,6 +91,7 @@ const pageDesc = selectedModelName
               tagIds={tagParams}
               sort={sort}
               initialOffset={items.length}
+              initialCursor={nextCursor}
             />
           )}
         </>
