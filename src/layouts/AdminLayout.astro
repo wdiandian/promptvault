@@ -1,5 +1,5 @@
 ---
-import BaseLayout from './BaseLayout.astro';
+import '@/styles/global.css';
 
 interface Props {
   title: string;
@@ -18,20 +18,46 @@ const navItems = [
 const currentPath = Astro.url.pathname;
 ---
 
-<BaseLayout title={`${title} — Admin | PromptVault`} noindex>
-  <div class="flex min-h-[calc(100vh-52px)]">
-    <aside class="w-[200px] fixed top-[52px] bottom-0 left-0 bg-bg-sidebar border-r border-border overflow-y-auto py-4 max-md:hidden">
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title} - Admin | PromptVault</title>
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+</head>
+<body class="bg-bg text-text font-sans leading-[1.55]">
+  <header class="fixed top-0 left-0 right-0 h-[52px] bg-bg border-b border-border z-[100] flex items-center px-5 gap-3">
+    <a href="/admin" class="flex items-center gap-[7px] text-base font-bold tracking-[-0.03em] shrink-0">
+      <span class="w-[7px] h-[7px] rounded-full bg-accent"></span>
+      PromptVault Admin
+    </a>
+    <a href="/" class="ml-auto text-xs text-text-3 hover:text-text-2 transition-colors">View Site</a>
+    <button
+      id="logout-btn"
+      class="text-xs text-text-3 border border-border px-3 py-1.5 rounded-sm hover:border-border-hover hover:text-text-2 transition-all"
+    >
+      Logout
+    </button>
+  </header>
+
+  <div class="flex min-h-screen pt-[52px] max-md:flex-col">
+    <aside class="w-[200px] fixed top-[52px] bottom-0 left-0 bg-bg-sidebar border-r border-border overflow-y-auto py-4 max-md:static max-md:w-full max-md:h-auto max-md:border-r-0 max-md:border-b max-md:flex max-md:overflow-x-auto max-md:py-2">
       {navItems.map((item) => (
         <a
           href={item.href}
           class:list={[
-            'flex items-center gap-2.5 px-4 py-2.5 text-[.8125rem] transition-all duration-100',
+            'flex items-center gap-2.5 px-4 py-2.5 text-[.8125rem] transition-all duration-100 max-md:shrink-0',
             currentPath === item.href
               ? 'text-text font-semibold'
               : 'text-text-3 hover:text-text-2 hover:bg-bg-hover',
           ]}
         >
-          <span class="w-4 h-4">
+          <span class="w-4 h-4 shrink-0">
             {item.icon === 'grid' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>}
             {item.icon === 'file' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>}
             {item.icon === 'star' && <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
@@ -41,22 +67,17 @@ const currentPath = Astro.url.pathname;
         </a>
       ))}
     </aside>
-    <div class="ml-[200px] flex-1 p-6 md:p-7 max-md:ml-0">
-      <div class="flex justify-end mb-4">
-        <button
-          id="logout-btn"
-          class="text-xs text-text-3 border border-border px-3 py-1.5 rounded-sm hover:border-border-hover hover:text-text-2 transition-all"
-        >
-          Logout
-        </button>
-      </div>
+
+    <main class="ml-[200px] flex-1 p-6 md:p-7 max-md:ml-0 min-w-0">
       <slot />
-    </div>
+    </main>
   </div>
+
   <script>
     document.getElementById('logout-btn')?.addEventListener('click', () => {
       document.cookie = 'admin_session=; path=/; max-age=0';
       window.location.href = '/admin/login';
     });
   </script>
-</BaseLayout>
+</body>
+</html>
