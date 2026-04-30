@@ -19,8 +19,15 @@ export const GET: APIRoute = async ({ url }) => {
     offset,
   });
 
+  const cacheControl = sort === 'random'
+    ? 'public, s-maxage=60, stale-while-revalidate=300'
+    : 'public, s-maxage=300, stale-while-revalidate=1800';
+
   return new Response(JSON.stringify(result), {
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Cache-Control': cacheControl,
+    },
   });
 };
 

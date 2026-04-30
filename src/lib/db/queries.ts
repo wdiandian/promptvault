@@ -101,7 +101,6 @@ export async function getPrompts(opts: {
       title: promptItems.title,
       slug: promptItems.slug,
       modelId: promptItems.modelId,
-      promptText: promptItems.promptText,
       views: promptItems.views,
       copies: promptItems.copies,
       coverUrl: promptItems.coverUrl,

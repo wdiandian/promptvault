@@ -17,5 +17,17 @@ CREATE INDEX IF NOT EXISTS idx_prompt_model_status_created
 CREATE INDEX IF NOT EXISTS idx_prompt_model_status_copies
   ON prompt_items(model_id, status, copies);
 
+CREATE INDEX IF NOT EXISTS idx_prompt_status_created_id
+  ON prompt_items(status, created_at, id);
+
+CREATE INDEX IF NOT EXISTS idx_prompt_status_copies_id
+  ON prompt_items(status, copies, id);
+
+CREATE INDEX IF NOT EXISTS idx_prompt_model_status_created_id
+  ON prompt_items(model_id, status, created_at, id);
+
+CREATE INDEX IF NOT EXISTS idx_prompt_model_status_copies_id
+  ON prompt_items(model_id, status, copies, id);
+
 CREATE INDEX IF NOT EXISTS idx_prompt_item_tags_tag_prompt
   ON prompt_item_tags(tag_id, prompt_item_id);

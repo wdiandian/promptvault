@@ -66,6 +66,10 @@ export const promptItems = pgTable('prompt_items', {
   index('idx_prompt_status_copies').on(table.status, table.copies),
   index('idx_prompt_model_status_created').on(table.modelId, table.status, table.createdAt),
   index('idx_prompt_model_status_copies').on(table.modelId, table.status, table.copies),
+  index('idx_prompt_status_created_id').on(table.status, table.createdAt, table.id),
+  index('idx_prompt_status_copies_id').on(table.status, table.copies, table.id),
+  index('idx_prompt_model_status_created_id').on(table.modelId, table.status, table.createdAt, table.id),
+  index('idx_prompt_model_status_copies_id').on(table.modelId, table.status, table.copies, table.id),
   index('idx_prompt_slug').on(table.slug),
 ]);
 
