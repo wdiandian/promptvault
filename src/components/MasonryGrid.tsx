@@ -109,7 +109,7 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
             <a
               key={item.id}
               href={`/prompt/${item.slug}`}
-              className="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
+              className="prompt-card group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
             >
               <div style={{ aspectRatio: ratio }} className="w-full overflow-hidden bg-bg-hover">
                 {isVid ? (

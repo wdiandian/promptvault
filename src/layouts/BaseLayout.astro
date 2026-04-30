@@ -54,6 +54,7 @@ const canonicalUrl = canonical ?? Astro.url.href;
   <slot name="head" />
 </head>
 <body class="bg-bg text-text font-sans leading-[1.55]">
+  <div id="page-progress" aria-hidden="true"></div>
   <Header />
   <main class="pt-[52px]">
     <slot />
@@ -116,6 +117,34 @@ const canonicalUrl = canonical ?? Astro.url.href;
     function setupPageRuntime() {
       setupLazyVideos();
       disableBlockingPageOverlays();
+    }
+
+    if (!window.__promptVaultNavigationFeedback) {
+      window.__promptVaultNavigationFeedback = true;
+      const root = document.documentElement;
+      let navigationTimer;
+
+      const startNavigation = () => {
+        clearTimeout(navigationTimer);
+        root.classList.add('is-navigating');
+        root.classList.remove('is-navigation-complete');
+      };
+
+      const prepareSwap = () => {
+        root.classList.add('is-swapping');
+      };
+
+      const finishNavigation = () => {
+        root.classList.remove('is-swapping');
+        root.classList.add('is-navigation-complete');
+        navigationTimer = window.setTimeout(() => {
+          root.classList.remove('is-navigating', 'is-navigation-complete');
+        }, 180);
+      };
+
+      document.addEventListener('astro:before-preparation', startNavigation);
+      document.addEventListener('astro:before-swap', prepareSwap);
+      document.addEventListener('astro:page-load', finishNavigation);
     }
 
     setupPageRuntime();

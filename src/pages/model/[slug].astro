@@ -5,9 +5,9 @@ import Sidebar from '@/components/Sidebar.astro';
 import FilterBar from '@/components/FilterBar.tsx';
 import PromptCard from '@/components/PromptCard.astro';
 import { db } from '@/lib/db/index';
-import { models, promptItems, tags } from '@/lib/db/schema';
-import { eq, desc, asc, sql, and } from 'drizzle-orm';
-import { getModels, getTags, getModelCounts } from '@/lib/db/queries';
+import { models } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { getModels, getTags, getModelCounts, getPrompts } from '@/lib/db/queries';
 
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=1800, stale-while-revalidate=86400');
 
@@ -35,30 +35,12 @@ const modelsWithCounts = allModels.map((m) => ({
   count: countMap[m.id] ?? 0,
 }));
 
-const items = await db
-  .select({
-    id: promptItems.id,
-    title: promptItems.title,
-    slug: promptItems.slug,
-    modelId: promptItems.modelId,
-    promptText: promptItems.promptText,
-    views: promptItems.views,
-    copies: promptItems.copies,
-    coverUrl: promptItems.coverUrl,
-    coverThumbUrl: promptItems.coverThumbUrl,
-    coverWidth: promptItems.coverWidth,
-    coverHeight: promptItems.coverHeight,
-    status: promptItems.status,
-    createdAt: promptItems.createdAt,
-    modelName: models.name,
-    modelColor: models.color,
-    modelType: models.type,
-  })
-  .from(promptItems)
-  .innerJoin(models, eq(promptItems.modelId, models.id))
-  .where(and(eq(promptItems.status, 'published'), eq(promptItems.modelId, model.id)))
-  .orderBy(sort === 'popular' ? desc(promptItems.copies) : sort === 'random' ? sql`RANDOM()` : desc(promptItems.createdAt))
-  .limit(40);
+const { items } = await getPrompts({
+  modelId: model.id,
+  tagIds: tagParams.length > 0 ? tagParams : undefined,
+  sort,
+  limit: 40,
+});
 
 const promptCount = countMap[model.id] ?? 0;
 const seoTitle = `${model.name} Prompts — Best AI ${model.type === 'video' ? 'Video' : 'Image'} Prompts | GetPT`;
@@ -91,7 +73,6 @@ const seoDesc = `Browse ${promptCount} curated ${model.name} prompts with full p
 
     <div class="ml-[220px] flex-1 flex flex-col min-w-0 max-md:ml-0">
       <FilterBar
-        client:idle
         tags={allTags.map((t) => ({ id: t.id, name: t.name }))}
         currentTags={tagParams}
         currentSort={sort}

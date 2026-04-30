@@ -95,7 +95,7 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
               <a
                 key={item.id}
                 href={`/prompt/${item.slug}`}
-                className="group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
+                className="prompt-card group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
               >
                 <div style={{ aspectRatio: `${w}/${h}` }} className="w-full overflow-hidden bg-bg-hover">
                   {imageSrc ? (

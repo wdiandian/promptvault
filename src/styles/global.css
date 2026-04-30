@@ -78,9 +78,53 @@
   }
 }
 
+#page-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  width: 100%;
+  height: 2px;
+  background: var(--color-accent);
+  opacity: 0;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition:
+    transform 220ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 120ms ease;
+}
+
+html.is-navigating #page-progress {
+  opacity: 1;
+  transform: scaleX(0.72);
+}
+
+html.is-swapping #page-progress {
+  transform: scaleX(0.94);
+}
+
+html.is-navigation-complete #page-progress {
+  opacity: 0;
+  transform: scaleX(1);
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 140ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
 @utility tags-hide-scrollbar {
   scrollbar-width: none;
   &::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@layer components {
+  .prompt-card {
+    content-visibility: auto;
+    contain-intrinsic-size: 320px 460px;
   }
 }
