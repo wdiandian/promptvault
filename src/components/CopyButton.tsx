@@ -5,12 +5,16 @@ interface Props {
   label?: string;
   variant?: 'sm' | 'fill' | 'outline';
   className?: string;
+  slug?: string;
 }
 
-export default function CopyButton({ text, label = 'Copy', variant = 'sm', className = '' }: Props) {
+export default function CopyButton({ text, label = 'Copy', variant = 'sm', className = '', slug }: Props) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
+      if (slug) {
+        fetch(`/api/prompts/${slug}/copy`, { method: 'POST' });
+      }
       showToast('Copied!');
     } catch {
       showToast('Failed to copy');

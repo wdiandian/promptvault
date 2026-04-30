@@ -84,6 +84,7 @@ const currentPath = Astro.url.pathname;
       if (!viewportArea) return;
 
       document.querySelectorAll('body > *').forEach((el) => {
+        if (!(el instanceof HTMLElement)) return;
         if (el.matches('header, main, aside, script, style, link')) return;
 
         const style = window.getComputedStyle(el);

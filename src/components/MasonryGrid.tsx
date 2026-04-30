@@ -7,6 +7,7 @@ interface PromptItem {
   slug: string;
   coverUrl: string | null;
   coverThumbUrl: string | null;
+  coverWidth: number | null;
   coverHeight: number | null;
   copies: number;
   views: number;
