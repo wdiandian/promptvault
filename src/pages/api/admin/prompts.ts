@@ -8,7 +8,7 @@ import { slugify } from '@/lib/utils';
 export const POST: APIRoute = async ({ request }) => {
   try {
     const body = await request.json();
-    const { title, slug, modelId, promptText, negativePrompt, params, notes, status, tags: tagNames, coverUrl } = body;
+    const { title, slug, modelId, promptText, negativePrompt, params, notes, status, tags: tagNames, coverUrl, coverThumbUrl } = body;
 
     const finalSlug = slug || slugify(title);
 
@@ -22,6 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
       notes: notes || null,
       status: status || 'draft',
       coverUrl: coverUrl || null,
+      coverThumbUrl: coverThumbUrl || null,
     }).returning();
 
     if (tagNames?.length > 0) {
@@ -49,6 +50,7 @@ export const POST: APIRoute = async ({ request }) => {
         await db.insert(assets).values({
           type: m.type ?? 'image',
           url: m.url,
+          thumbUrl: m.thumbUrl || null,
           alt: title,
           promptItemId: created.id,
           sort: i,
@@ -85,6 +87,7 @@ export const PUT: APIRoute = async ({ request }) => {
     if (body.notes !== undefined) updateData.notes = body.notes || null;
     if (body.status !== undefined) updateData.status = body.status;
     if (body.coverUrl !== undefined) updateData.coverUrl = body.coverUrl || null;
+    if (body.coverThumbUrl !== undefined) updateData.coverThumbUrl = body.coverThumbUrl || null;
 
     const [updated] = await db.update(promptItems)
       .set(updateData)
@@ -116,6 +119,7 @@ export const PUT: APIRoute = async ({ request }) => {
         await db.insert(assets).values({
           type: m.type ?? 'image',
           url: m.url,
+          thumbUrl: m.thumbUrl || null,
           alt: body.title ?? '',
           promptItemId: id,
           sort: i,

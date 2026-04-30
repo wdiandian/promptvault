@@ -23,7 +23,7 @@ const itemTags = await db
   .where(eq(promptItemTags.promptItemId, id));
 
 const itemAssets = await db
-  .select({ url: assets.url, type: assets.type })
+  .select({ url: assets.url, type: assets.type, thumbUrl: assets.thumbUrl })
   .from(assets)
   .where(eq(assets.promptItemId, id))
   .orderBy(asc(assets.sort));
@@ -41,8 +41,8 @@ const initial = {
   status: item.status,
   coverUrl: item.coverUrl ?? '',
   mediaList: itemAssets.length > 0
-    ? itemAssets.map((a) => ({ url: a.url, type: a.type as 'image' | 'video' }))
-    : (item.coverUrl ? [{ url: item.coverUrl, type: (/\.(mp4|webm|mov)$/i.test(item.coverUrl) ? 'video' : 'image') as 'image' | 'video' }] : []),
+    ? itemAssets.map((a) => ({ url: a.url, type: a.type as 'image' | 'video', thumbUrl: a.thumbUrl }))
+    : (item.coverUrl ? [{ url: item.coverUrl, type: (/\.(mp4|webm|mov)$/i.test(item.coverUrl) ? 'video' : 'image') as 'image' | 'video', thumbUrl: item.coverThumbUrl }] : []),
 };
 ---
 

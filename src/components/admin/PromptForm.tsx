@@ -15,6 +15,7 @@ interface Tag {
 interface MediaItem {
   url: string;
   type: 'image' | 'video';
+  thumbUrl?: string | null;
 }
 
 interface PromptData {
@@ -122,6 +123,7 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
           params: parsedParams,
           tags: form.tags.split(',').map((t) => t.trim()).filter(Boolean),
           coverUrl: form.mediaList[0]?.url || form.coverUrl || null,
+          coverThumbUrl: form.mediaList[0]?.thumbUrl || null,
           mediaList: form.mediaList,
         }),
       });
@@ -275,7 +277,11 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
             {form.mediaList.map((item, idx) => (
               <div key={idx} className="flex items-center gap-3 bg-bg-input border border-border rounded-sm px-3 py-2">
                 {item.type === 'video' ? (
-                  <video src={item.url} className="w-14 h-14 rounded object-cover bg-bg-hover" muted preload="metadata" />
+                  item.thumbUrl ? (
+                    <img src={item.thumbUrl} alt="" className="w-14 h-14 rounded object-cover bg-bg-hover" />
+                  ) : (
+                    <video src={item.url} className="w-14 h-14 rounded object-cover bg-bg-hover" muted preload="metadata" />
+                  )
                 ) : (
                   <img src={item.url} alt="" className="w-14 h-14 rounded object-cover bg-bg-hover" />
                 )}
@@ -312,11 +318,11 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
           </div>
         )}
 
-        <InlineUpload onUploaded={(url) => {
+        <InlineUpload onUploaded={(url, thumbUrl) => {
           const type: 'image' | 'video' = /\.(mp4|webm|mov)$/i.test(url) ? 'video' : 'image';
           setForm((prev) => ({
             ...prev,
-            mediaList: [...prev.mediaList, { url, type }],
+            mediaList: [...prev.mediaList, { url, type, thumbUrl }],
           }));
         }} />
       </div>
@@ -353,7 +359,7 @@ export default function PromptForm({ models, tags: _tags, initial, onClose }: Pr
   );
 }
 
-function InlineUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
+function InlineUpload({ onUploaded }: { onUploaded: (url: string, thumbUrl?: string | null) => void }) {
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState('');
   const [pasteUrl, setPasteUrl] = useState('');
@@ -407,15 +413,74 @@ function InlineUpload({ onUploaded }: { onUploaded: (url: string) => void }) {
     }
   };
 
+  const uploadBlob = async (fileName: string, contentType: string, blob: Blob): Promise<string | null> => {
+    const file = new File([blob], fileName, { type: contentType });
+    return uploadOne(file);
+  };
+
+  const createVideoThumbnail = async (file: File): Promise<Blob | null> => {
+    const objectUrl = URL.createObjectURL(file);
+
+    try {
+      const video = document.createElement('video');
+      video.src = objectUrl;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'metadata';
+
+      await new Promise<void>((resolve, reject) => {
+        video.onloadedmetadata = () => resolve();
+        video.onerror = () => reject(new Error('Failed to read video metadata'));
+      });
+
+      video.currentTime = Math.min(0.5, Math.max(0, (video.duration || 1) / 2));
+
+      await new Promise<void>((resolve, reject) => {
+        video.onseeked = () => resolve();
+        video.onerror = () => reject(new Error('Failed to capture video frame'));
+      });
+
+      const canvas = document.createElement('canvas');
+      const videoWidth = video.videoWidth || 640;
+      const videoHeight = video.videoHeight || 360;
+      const width = Math.min(videoWidth, 720);
+      const height = Math.round(width * (videoHeight / videoWidth));
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext('2d')?.drawImage(video, 0, 0, width, height);
+
+      return await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.82));
+    } catch {
+      return null;
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  };
+
+  const uploadWithThumbnail = async (file: File): Promise<{ url: string; thumbUrl?: string | null } | null> => {
+    const url = await uploadOne(file);
+    if (!url) return null;
+
+    if (!file.type.startsWith('video/')) return { url };
+
+    setProgress(`Generating thumbnail: ${file.name}`);
+    const thumb = await createVideoThumbnail(file);
+    if (!thumb) return { url };
+
+    const baseName = file.name.replace(/\.[^.]+$/, '');
+    const thumbUrl = await uploadBlob(`${baseName}-thumb.jpg`, 'image/jpeg', thumb);
+    return { url, thumbUrl };
+  };
+
   const handleFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     setUploading(true);
     const list = Array.from(files);
     for (let i = 0; i < list.length; i++) {
       setProgress(`Uploading ${i + 1}/${list.length}: ${list[i].name}`);
-      const url = await uploadOne(list[i]);
-      if (url) {
-        onUploaded(url);
+      const result = await uploadWithThumbnail(list[i]);
+      if (result) {
+        onUploaded(result.url, result.thumbUrl);
         showToast(`Uploaded: ${list[i].name}`);
       }
     }
