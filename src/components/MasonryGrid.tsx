@@ -135,7 +135,7 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
                 )}
               </div>
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
                 <h3 className="text-[.875rem] font-semibold leading-[1.35] mb-1 line-clamp-2 text-white">{item.title}</h3>
                 <div className="text-[.75rem] text-white/60 flex items-center gap-2">
                   <span>{item.modelName}</span>
@@ -144,7 +144,7 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
               </div>
 
               <button
-                className="absolute top-2 right-2 w-[30px] h-[30px] rounded-sm bg-black/40 backdrop-blur-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-accent border border-white/[.08]"
+                className="pointer-events-auto absolute top-2 right-2 w-[30px] h-[30px] rounded-sm bg-black/40 backdrop-blur-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-accent border border-white/[.08]"
                 onClick={(e) => handleCopy(item.slug, e)}
                 title="Copy prompt"
               >
@@ -155,7 +155,7 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
               </button>
 
               {isVid && (
-                <span className="absolute top-2 left-2 flex items-center gap-1 text-[.6875rem] font-semibold px-2 py-[3px] rounded-sm bg-black/50 backdrop-blur-[8px] text-white/80">
+                <span className="pointer-events-none absolute top-2 left-2 flex items-center gap-1 text-[.6875rem] font-semibold px-2 py-[3px] rounded-sm bg-black/50 backdrop-blur-[8px] text-white/80">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   Video
                 </span>
