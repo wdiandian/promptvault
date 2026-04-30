@@ -58,5 +58,32 @@ const canonicalUrl = canonical ?? Astro.url.href;
   </main>
   <Footer />
   <Toast client:idle />
+  <script is:inline>
+    function disableBlockingPageOverlays() {
+      const viewportArea = window.innerWidth * window.innerHeight;
+      if (!viewportArea) return;
+
+      document.querySelectorAll('body > *').forEach((el) => {
+        if (el.matches('header, main, footer, astro-island, script, style, link')) return;
+
+        const style = window.getComputedStyle(el);
+        if (style.position !== 'fixed' && style.position !== 'absolute') return;
+
+        const rect = el.getBoundingClientRect();
+        const area = rect.width * rect.height;
+        const coversViewport = area > viewportArea * 0.9 && rect.left < 8 && rect.top < 8;
+        if (!coversViewport) return;
+
+        const hasInteractiveContent = el.querySelector('a, button, input, select, textarea, [role="button"]');
+        if (hasInteractiveContent) return;
+
+        el.style.pointerEvents = 'none';
+      });
+    }
+
+    disableBlockingPageOverlays();
+    window.addEventListener('load', disableBlockingPageOverlays);
+    new MutationObserver(disableBlockingPageOverlays).observe(document.body, { childList: true });
+  </script>
 </body>
 </html>
