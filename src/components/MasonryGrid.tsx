@@ -30,6 +30,29 @@ function formatCount(n: number): string {
   return String(n);
 }
 
+async function copyText(text: string) {
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.setAttribute('readonly', '');
+  textarea.style.position = 'fixed';
+  textarea.style.top = '-1000px';
+  textarea.style.opacity = '0';
+  document.body.appendChild(textarea);
+  textarea.select();
+
+  try {
+    const copied = document.execCommand('copy');
+    if (!copied) throw new Error('Copy command failed');
+  } finally {
+    document.body.removeChild(textarea);
+  }
+}
+
 export default function MasonryGrid({ initialItems, hasMore: initialHasMore, modelId, tagIds = [], sort = 'latest' }: Props) {
   const [items, setItems] = useState(initialItems);
   const [hasMore, setHasMore] = useState(initialHasMore);
@@ -89,9 +112,9 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
       const res = await fetch(`/api/prompts/${slug}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
-      await navigator.clipboard.writeText(data.promptText ?? data.prompt_items?.promptText ?? '');
+      await copyText(data.promptText ?? data.prompt_items?.promptText ?? '');
       showToast('Copied!');
-      fetch(`/api/prompts/${slug}/copy`, { method: 'POST' });
+      fetch(`/api/prompts/${slug}/copy`, { method: 'POST', keepalive: true });
     } catch {
       showToast('Failed to copy');
     }
@@ -107,9 +130,8 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
           const h = item.coverHeight ?? (isVid ? 534 : 500);
           const ratio = `${w}/${h}`;
           return (
-            <a
+            <article
               key={item.id}
-              href={`/prompt/${item.slug}`}
               className="prompt-card group block break-inside-avoid mb-1.5 rounded-sm overflow-hidden relative cursor-pointer bg-bg-card"
             >
               <div style={{ aspectRatio: ratio }} className="w-full overflow-hidden bg-bg-hover">
@@ -142,7 +164,13 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
                 )}
               </div>
 
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
+              <a
+                href={`/prompt/${item.slug}`}
+                className="absolute inset-0 z-10"
+                aria-label={item.title}
+              />
+
+              <div className="pointer-events-none absolute inset-0 z-20 bg-gradient-to-t from-black/70 via-black/15 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end p-3.5">
                 <h3 className="text-[.875rem] font-semibold leading-[1.35] mb-1 line-clamp-2 text-white">{item.title}</h3>
                 <div className="text-[.75rem] text-white/60 flex items-center gap-2">
                   <span>{item.modelName}</span>
@@ -151,7 +179,10 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
               </div>
 
               <button
-                className="pointer-events-auto absolute top-2 right-2 w-[30px] h-[30px] rounded-sm bg-black/40 backdrop-blur-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-accent border border-white/[.08]"
+                type="button"
+                className="pointer-events-auto absolute top-2 right-2 z-30 w-[30px] h-[30px] rounded-sm bg-black/40 backdrop-blur-[8px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150 hover:bg-accent border border-white/[.08]"
+                onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                 onClick={(e) => handleCopy(item.slug, e)}
                 title="Copy prompt"
               >
@@ -162,12 +193,12 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
               </button>
 
               {isVid && (
-                <span className="pointer-events-none absolute top-2 left-2 flex items-center gap-1 text-[.6875rem] font-semibold px-2 py-[3px] rounded-sm bg-black/50 backdrop-blur-[8px] text-white/80">
+                <span className="pointer-events-none absolute top-2 left-2 z-20 flex items-center gap-1 text-[.6875rem] font-semibold px-2 py-[3px] rounded-sm bg-black/50 backdrop-blur-[8px] text-white/80">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="white"><polygon points="5 3 19 12 5 21 5 3"/></svg>
                   Video
                 </span>
               )}
-            </a>
+            </article>
           );
         })}
       </div>
