@@ -127,6 +127,11 @@ export default function MasonryGrid({ initialItems, hasMore: initialHasMore, mod
                 ) : (
                   <img
                     src={imgSrc}
+                    onError={(e) => {
+                      const img = e.currentTarget;
+                      const fallback = `https://picsum.photos/seed/${item.slug}/400/${item.coverHeight ?? 400}`;
+                      if (img.src !== fallback) img.src = fallback;
+                    }}
                     alt={item.title}
                     loading="lazy"
                     decoding="async"

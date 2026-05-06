@@ -96,10 +96,10 @@ async function downloadImage(url: string, id: number) {
   const sourceBuffer = Buffer.from(await res.arrayBuffer());
   const image = sharp(sourceBuffer)
     .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-    .webp({ quality: 78 });
+    .jpeg({ quality: 84, mozjpeg: true });
   const buffer = await image.toBuffer();
   const metadata = await sharp(buffer).metadata();
-  const filename = `${id}.webp`;
+  const filename = `${id}.jpg`;
   await mkdir(IMAGE_DIR, { recursive: true });
   await writeFile(path.join(IMAGE_DIR, filename), buffer);
 
@@ -108,7 +108,7 @@ async function downloadImage(url: string, id: number) {
     width: metadata.width ?? null,
     height: metadata.height ?? null,
     size: buffer.length,
-    format: 'webp',
+    format: 'jpg',
   };
 }
 

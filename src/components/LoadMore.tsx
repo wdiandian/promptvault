@@ -108,6 +108,10 @@ export default function LoadMore({ modelId, tagIds = [], sort = 'latest', initia
                   {imageSrc ? (
                     <img
                       src={imageSrc}
+                      onError={(e) => {
+                        const img = e.currentTarget;
+                        if (img.src !== fallbackSrc) img.src = fallbackSrc;
+                      }}
                       alt={item.title}
                       width={w}
                       height={h}

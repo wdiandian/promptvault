@@ -37,6 +37,7 @@ const h = coverHeight ?? (isVideo ? 534 : 500);
     {imageSrc ? (
       <img
         src={imageSrc}
+        onerror={`this.onerror=null;this.src='${fallbackSrc}';`}
         alt={title}
         width={w}
         height={h}
