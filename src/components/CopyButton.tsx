@@ -9,11 +9,34 @@ interface Props {
 }
 
 export default function CopyButton({ text, label = 'Copy', variant = 'sm', className = '', slug }: Props) {
+  const copyText = async () => {
+    if (navigator.clipboard?.writeText && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-1000px';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    try {
+      const copied = document.execCommand('copy');
+      if (!copied) throw new Error('Copy command failed');
+    } finally {
+      document.body.removeChild(textarea);
+    }
+  };
+
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(text);
+      await copyText();
       if (slug) {
-        fetch(`/api/prompts/${slug}/copy`, { method: 'POST' });
+        fetch(`/api/prompts/${slug}/copy`, { method: 'POST', keepalive: true });
       }
       showToast('Copied!');
     } catch {
@@ -30,6 +53,7 @@ export default function CopyButton({ text, label = 'Copy', variant = 'sm', class
 
   return (
     <button
+      type="button"
       onClick={handleCopy}
       className={`${base} ${variants[variant]} ${className}`}
     >

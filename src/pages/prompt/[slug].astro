@@ -15,7 +15,7 @@ if (!slug) return Astro.redirect('/gallery');
 const prompt = await getPromptBySlug(slug);
 if (!prompt) return Astro.redirect('/gallery');
 
-await incrementViews(slug);
+void incrementViews(slug).catch((error) => console.error('[views]', error));
 
 const related = await getRelatedPrompts(prompt.modelId, prompt.id, 5);
 
@@ -38,6 +38,9 @@ const jsonText = JSON.stringify({
 const seoDesc = truncate(prompt.promptText, 150);
 const isVideo = prompt.model.type === 'video' || /\.(mp4|webm|mov)$/i.test(prompt.coverUrl ?? '');
 const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.type === 'video')?.url) : null;
+const primaryAsset = prompt.assets[0];
+const showThumbStrip = prompt.assets.length > 1;
+const mainImageUrl = prompt.coverThumbUrl ?? prompt.coverUrl ?? primaryAsset?.thumbUrl ?? primaryAsset?.url;
 ---
 
 <BaseLayout
@@ -93,11 +96,11 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
       )}
 
       {/* Visible media */}
-      {prompt.assets.length > 0 ? (
+      {showThumbStrip ? (
         <ThumbStrip client:visible assets={prompt.assets} />
       ) : isVideo && videoUrl ? (
         <video
-          src={videoUrl}
+          data-lazy-video={videoUrl}
           controls
           autoplay
           loop
@@ -107,8 +110,12 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
         />
       ) : (
         <img
-          src={prompt.coverUrl ?? `https://picsum.photos/seed/${slug}/800/1000`}
+          src={mainImageUrl ?? `https://picsum.photos/seed/${slug}/800/1000`}
           alt={prompt.title}
+          width={prompt.coverWidth ?? undefined}
+          height={prompt.coverHeight ?? undefined}
+          loading="eager"
+          decoding="async"
           class="max-h-[72vh] max-w-full rounded-[10px] object-contain"
         />
       )}
@@ -158,7 +165,7 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
       <div class="bg-bg-card border border-border rounded-[10px] overflow-hidden">
         <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
           <h4 class="text-[.8125rem] font-semibold text-text-2">Prompt</h4>
-          <CopyButton client:visible text={prompt.promptText} slug={slug} />
+          <CopyButton client:load text={prompt.promptText} slug={slug} />
         </div>
         <div class="px-5 py-4 font-mono text-[.9375rem] leading-[1.8] text-text-2 whitespace-pre-wrap break-words max-h-[400px] overflow-y-auto">
           {prompt.promptText}
@@ -170,7 +177,7 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
         <div class="bg-bg-card border border-border rounded-[10px] overflow-hidden">
           <div class="flex items-center justify-between px-3.5 py-2.5 border-b border-border">
             <h4 class="text-[.8125rem] font-semibold text-text-2">Negative Prompt</h4>
-            <CopyButton client:visible text={prompt.negativePrompt} slug={slug} />
+            <CopyButton client:load text={prompt.negativePrompt} slug={slug} />
           </div>
           <div class="px-5 py-4 font-mono text-[.9375rem] leading-[1.8] text-text-2 whitespace-pre-wrap break-words max-h-[400px] overflow-y-auto">
             {prompt.negativePrompt}
@@ -211,9 +218,9 @@ const videoUrl = isVideo ? (prompt.coverUrl ?? prompt.assets.find((a: any) => a.
 
       <!-- Actions -->
       <div class="flex gap-1.5 flex-wrap">
-        <CopyButton client:visible text={fullText} label="Copy All" variant="fill" slug={slug} />
-        <CopyButton client:visible text={jsonText} label="Copy JSON" variant="outline" slug={slug} />
-        <CopyButton client:visible text={`https://getpt.net/prompt/${slug}`} label="Share" variant="outline" />
+        <CopyButton client:load text={fullText} label="Copy All" variant="fill" slug={slug} />
+        <CopyButton client:load text={jsonText} label="Copy JSON" variant="outline" slug={slug} />
+        <CopyButton client:load text={`https://getpt.net/prompt/${slug}`} label="Share" variant="outline" />
       </div>
     </div>
   </div>

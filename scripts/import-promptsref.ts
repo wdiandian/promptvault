@@ -4,6 +4,7 @@ import path from 'node:path';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import { eq, inArray } from 'drizzle-orm';
 import postgres from 'postgres';
+import sharp from 'sharp';
 import { assets, models, promptItems, promptItemTags, tags } from '../src/lib/db/schema';
 
 const SOURCE_URL = 'https://promptsref.com/library/gpt-image';
@@ -83,35 +84,6 @@ function textTitle(promptText: string) {
   return cleaned.length > 82 ? `${cleaned.slice(0, 79).trim()}...` : cleaned || 'Imported GPT Image Prompt';
 }
 
-function extFromContentType(contentType: string, fallbackUrl: string) {
-  if (contentType.includes('png')) return '.png';
-  if (contentType.includes('webp')) return '.webp';
-  if (contentType.includes('jpeg') || contentType.includes('jpg')) return '.jpg';
-  const match = new URL(fallbackUrl).pathname.match(/\.(jpg|jpeg|png|webp)$/i);
-  return match ? `.${match[1].toLowerCase().replace('jpeg', 'jpg')}` : '.png';
-}
-
-function readImageSize(buffer: Buffer) {
-  if (buffer.length > 24 && buffer[0] === 0x89 && buffer.toString('ascii', 1, 4) === 'PNG') {
-    return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
-  }
-
-  if (buffer.length > 4 && buffer[0] === 0xff && buffer[1] === 0xd8) {
-    let offset = 2;
-    while (offset < buffer.length) {
-      if (buffer[offset] !== 0xff) break;
-      const marker = buffer[offset + 1];
-      const length = buffer.readUInt16BE(offset + 2);
-      if (marker >= 0xc0 && marker <= 0xc3) {
-        return { width: buffer.readUInt16BE(offset + 7), height: buffer.readUInt16BE(offset + 5) };
-      }
-      offset += 2 + length;
-    }
-  }
-
-  return { width: null, height: null };
-}
-
 async function downloadImage(url: string, id: number) {
   const res = await fetch(url, {
     headers: {
@@ -121,19 +93,22 @@ async function downloadImage(url: string, id: number) {
   });
   if (!res.ok) throw new Error(`Image ${res.status} ${res.statusText}`);
 
-  const buffer = Buffer.from(await res.arrayBuffer());
-  const ext = extFromContentType(res.headers.get('content-type') ?? '', url);
-  const filename = `${id}${ext}`;
+  const sourceBuffer = Buffer.from(await res.arrayBuffer());
+  const image = sharp(sourceBuffer)
+    .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 78 });
+  const buffer = await image.toBuffer();
+  const metadata = await sharp(buffer).metadata();
+  const filename = `${id}.webp`;
   await mkdir(IMAGE_DIR, { recursive: true });
   await writeFile(path.join(IMAGE_DIR, filename), buffer);
 
-  const size = readImageSize(buffer);
   return {
     url: `${PUBLIC_IMAGE_PREFIX}/${filename}`,
-    width: size.width,
-    height: size.height,
+    width: metadata.width ?? null,
+    height: metadata.height ?? null,
     size: buffer.length,
-    format: ext.slice(1),
+    format: 'webp',
   };
 }
 
